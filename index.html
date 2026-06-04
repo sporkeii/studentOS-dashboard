@@ -1,0 +1,370 @@
+<!-- start : 1:14PM , 6/04/2026.. -->
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudentOS v2.0 — Study Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- loading screen -->
+<div id="loader">
+  <div class="loader-inner">
+    <div class="loader-logo">StudentOS</div>
+    <div class="loader-version">version 2.0 — study edition</div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar" id="loaderBar"></div>
+    </div>
+    <div class="loader-text" id="loaderText">initializing system...</div>
+    <div class="scanline-loader"></div>
+  </div>
+</div>
+
+<!-- particle canvas -->
+<canvas id="particles"></canvas>
+
+<!-- desktop -->
+<div id="desktop" class="hidden">
+
+  <!-- wallpaper grid -->
+  <div class="wallpaper-grid"></div>
+
+  <!-- desktop icons -->
+  <div class="icon-grid">
+    <div class="desk-icon" onclick="openApp('dashboard')">
+      <div class="icon-img">📚</div>
+      <span>Student<br/>Dashboard</span>
+    </div>
+    <div class="desk-icon" onclick="openApp('3d')">
+      <div class="icon-img">🌌</div>
+      <span>3D<br/>Interactive</span>
+    </div>
+    <div class="desk-icon" onclick="openApp('music')">
+      <div class="icon-img">🎵</div>
+      <span>Music<br/>Player</span>
+    </div>
+    <div class="desk-icon" onclick="openApp('notes')">
+      <div class="icon-img">📝</div>
+      <span>Notes<br/>App</span>
+    </div>
+    <div class="desk-icon" onclick="openApp('timer')">
+      <div class="icon-img">⏰</div>
+      <span>Study<br/>Timer</span>
+    </div>
+  </div>
+
+  <!-- windows container -->
+  <div id="windows-container"></div>
+
+  <!-- mini music player (always visible when music loaded) -->
+  <div id="miniPlayer" class="hidden">
+    <div class="mini-album" id="miniAlbum">🎵</div>
+    <div class="mini-info">
+      <div class="mini-title" id="miniTitle">No Track</div>
+      <div class="mini-artist" id="miniArtist">—</div>
+    </div>
+    <div class="mini-controls">
+      <button onclick="prevSong()" title="prev">◀◀</button>
+      <button onclick="togglePlay()" id="miniPlayBtn" title="play">▶</button>
+      <button onclick="nextSong()" title="next">▶▶</button>
+    </div>
+    <div class="mini-eq" id="miniEq">
+      <span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- taskbar -->
+  <div class="taskbar">
+    <div class="taskbar-left">
+      <div class="start-btn" onclick="toggleStartMenu()">⊞ START</div>
+      <div class="taskbar-apps" id="taskbarApps"></div>
+    </div>
+    <div class="taskbar-right">
+      <div class="taskbar-weather">☀️ 34°C</div>
+      <div class="taskbar-vol" onclick="toggleMiniPlayer()" title="toggle mini player">🎵</div>
+      <div class="taskbar-clock" id="clock">00:00</div>
+    </div>
+  </div>
+
+  <!-- start menu -->
+  <div id="startMenu" class="hidden">
+    <div class="start-header">
+      <div class="start-avatar">👤</div>
+      <div>
+        <div class="start-name">Student User</div>
+        <div class="start-status">🟢 studying hard</div>
+      </div>
+    </div>
+    <div class="start-items">
+      <div class="start-item" onclick="openApp('dashboard');toggleStartMenu()">📚 Dashboard</div>
+      <div class="start-item" onclick="openApp('music');toggleStartMenu()">🎵 Music Player</div>
+      <div class="start-item" onclick="openApp('3d');toggleStartMenu()">🌌 3D Mode</div>
+      <div class="start-item" onclick="openApp('notes');toggleStartMenu()">📝 Notes</div>
+      <div class="start-item" onclick="openApp('timer');toggleStartMenu()">⏰ Study Timer</div>
+    </div>
+    <div class="start-footer">
+      <div class="start-item" onclick="toggleStartMenu()">🔴 Close Menu</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- app templates (hidden) -->
+
+<!-- dashboard template -->
+<template id="tpl-dashboard">
+<div class="app-window" id="win-dashboard" style="top:60px;left:80px;width:700px;height:520px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'win-dashboard')">
+    <span class="win-title">📚 Student Dashboard</span>
+    <div class="win-btns">
+      <button class="win-min" onclick="minimizeWin('win-dashboard')">_</button>
+      <button class="win-close" onclick="closeApp('dashboard','win-dashboard')">✕</button>
+    </div>
+  </div>
+  <div class="win-body dash-body">
+    <div class="dash-welcome">
+      <div class="dash-avatar">👩‍💻</div>
+      <div>
+        <h2 class="dash-greeting">hey, welcome back! 👋</h2>
+        <p class="dash-sub">you have <span class="accent">3 tasks</span> due today · streak: <span class="streak">🔥 12 days</span></p>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <!-- subjects -->
+      <div class="dash-card">
+        <h3 class="card-title">📊 subjects</h3>
+        <div class="subject-list">
+          <div class="subject-item">
+            <div class="subj-name">Mathematics</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:78%;--c:#00ffcc;"></div></div>
+            <span class="prog-pct">78%</span>
+          </div>
+          <div class="subject-item">
+            <div class="subj-name">Science</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:65%;--c:#ff6eb4;"></div></div>
+            <span class="prog-pct">65%</span>
+          </div>
+          <div class="subject-item">
+            <div class="subj-name">English</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:90%;--c:#ffe066;"></div></div>
+            <span class="prog-pct">90%</span>
+          </div>
+          <div class="subject-item">
+            <div class="subj-name">History</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:52%;--c:#a78bfa;"></div></div>
+            <span class="prog-pct">52%</span>
+          </div>
+          <div class="subject-item">
+            <div class="subj-name">ICT</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:95%;--c:#38bdf8;"></div></div>
+            <span class="prog-pct">95%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- tasks -->
+      <div class="dash-card">
+        <h3 class="card-title">✅ tasks</h3>
+        <div class="task-list">
+          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> Math homework pg.42</label>
+          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> Science lab report</label>
+          <label class="task-item done"><input type="checkbox" checked onchange="strikeTask(this)" /> Read Chapter 5</label>
+          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> ICT PETA project</label>
+          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> History essay draft</label>
+        </div>
+        <div class="add-task">
+          <input type="text" id="newTaskInput" placeholder="add new task..." />
+          <button onclick="addTask()">+</button>
+        </div>
+      </div>
+
+      <!-- streak + stats -->
+      <div class="dash-card dash-card-wide">
+        <h3 class="card-title">📅 study streak</h3>
+        <div class="streak-grid" id="streakGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</template>
+
+<!-- 3d template -->
+<template id="tpl-3d">
+<div class="app-window" id="win-3d" style="top:80px;left:200px;width:640px;height:500px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'win-3d')">
+    <span class="win-title">🌌 3D Interactive Mode</span>
+    <div class="win-btns">
+      <button class="win-min" onclick="minimizeWin('win-3d')">_</button>
+      <button class="win-close" onclick="closeApp('3d','win-3d')">✕</button>
+    </div>
+  </div>
+  <div class="win-body three-body">
+    <div class="three-container">
+      <canvas id="threeCanvas"></canvas>
+      <div class="three-ui">
+        <div class="three-panel">
+          <div class="panel-label">ROTATION</div>
+          <div class="panel-val" id="rotVal">0°</div>
+        </div>
+        <div class="three-panel">
+          <div class="panel-label">OBJECT</div>
+          <select id="objSelect" onchange="changeObject()">
+            <option>Cube</option>
+            <option>Sphere</option>
+            <option>Torus</option>
+          </select>
+        </div>
+        <div class="three-panel">
+          <div class="panel-label">COLOR</div>
+          <input type="color" id="objColor" value="#00ffcc" onchange="changeColor()" />
+        </div>
+      </div>
+      <div class="three-hint">move mouse to interact · scroll to zoom</div>
+    </div>
+  </div>
+</div>
+</template>
+
+<!-- music template -->
+<template id="tpl-music">
+<div class="app-window" id="win-music" style="top:50px;left:150px;width:680px;height:540px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'win-music')">
+    <span class="win-title">🎵 Music Player — Study Mode</span>
+    <div class="win-btns">
+      <button class="win-min" onclick="minimizeWin('win-music')">_</button>
+      <button class="win-close" onclick="closeApp('music','win-music')">✕</button>
+    </div>
+  </div>
+  <div class="win-body music-body">
+    <div class="music-header">
+      <h2>top 5 music i listen to everytime i study :)</h2>
+      <div class="music-mode-btns">
+        <button class="mode-btn active" onclick="setMusicMode('full',this)">full player</button>
+        <button class="mode-btn" onclick="setMusicMode('mini',this)">mini</button>
+        <button class="mode-btn" onclick="setMusicMode('bg',this)">bg mode</button>
+      </div>
+    </div>
+
+    <div class="music-layout" id="musicLayout">
+      <!-- left: now playing -->
+      <div class="now-playing">
+        <div class="album-art" id="albumArt">
+          <div class="album-placeholder" id="albumEmoji">🎵</div>
+          <div class="album-spin-ring"></div>
+        </div>
+        <div class="np-info">
+          <div class="np-title" id="npTitle">Study Beats 01</div>
+          <div class="np-artist" id="npArtist">Chill Lo-Fi</div>
+        </div>
+        <div class="np-progress">
+          <div class="prog-time" id="progTime">0:00</div>
+          <div class="prog-track" id="progTrack" onclick="seekTrack(event)">
+            <div class="prog-fill-music" id="progFill"></div>
+            <div class="prog-dot" id="progDot"></div>
+          </div>
+          <div class="prog-total">3:45</div>
+        </div>
+        <div class="np-controls">
+          <button onclick="toggleShuffle()" id="shuffleBtn" title="shuffle">⇌</button>
+          <button onclick="prevSong()">◀◀</button>
+          <button class="play-big" onclick="togglePlay()" id="playBtn">▶</button>
+          <button onclick="nextSong()">▶▶</button>
+          <button onclick="toggleLoop()" id="loopBtn" title="loop">↺</button>
+        </div>
+        <div class="eq-bars" id="eqBars">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- right: playlist -->
+      <div class="playlist-panel">
+        <div class="playlist-title">playlist</div>
+        <div class="playlist-items" id="playlistItems"></div>
+      </div>
+    </div>
+
+    <!-- bg mode overlay -->
+    <div class="bg-mode-overlay hidden" id="bgOverlay">
+      <div class="bg-note">🎵 background audio mode</div>
+      <div class="bg-track" id="bgTrack">Study Beats 01</div>
+      <button class="bg-unmute" id="bgMuteBtn" onclick="toggleBgMute()">🔊 playing</button>
+    </div>
+  </div>
+</div>
+</template>
+
+<!-- notes template -->
+<template id="tpl-notes">
+<div class="app-window" id="win-notes" style="top:100px;left:300px;width:460px;height:400px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'win-notes')">
+    <span class="win-title">📝 Notes App</span>
+    <div class="win-btns">
+      <button class="win-min" onclick="minimizeWin('win-notes')">_</button>
+      <button class="win-close" onclick="closeApp('notes','win-notes')">✕</button>
+    </div>
+  </div>
+  <div class="win-body notes-body">
+    <div class="notes-toolbar">
+      <button onclick="formatNote('bold')"><b>B</b></button>
+      <button onclick="formatNote('italic')"><i>I</i></button>
+      <button onclick="formatNote('underline')"><u>U</u></button>
+      <select onchange="setNoteColor(this.value)">
+        <option value="">text color</option>
+        <option value="#00ffcc">cyan</option>
+        <option value="#ff6eb4">pink</option>
+        <option value="#ffe066">yellow</option>
+      </select>
+      <button onclick="clearNotes()">🗑️ clear</button>
+      <button onclick="saveNotes()">💾 save</button>
+    </div>
+    <div class="notes-area" id="noteArea" contenteditable="true" spellcheck="false">
+      <!-- start typing your notes here... -->
+      <p>hey, this is your notepad. type anything here :)</p>
+    </div>
+    <div class="notes-footer" id="notesFooter">0 words</div>
+  </div>
+</div>
+</template>
+
+<!-- timer template -->
+<template id="tpl-timer">
+<div class="app-window" id="win-timer" style="top:120px;left:350px;width:400px;height:380px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'win-timer')">
+    <span class="win-title">⏰ Study Timer</span>
+    <div class="win-btns">
+      <button class="win-min" onclick="minimizeWin('win-timer')">_</button>
+      <button class="win-close" onclick="closeApp('timer','win-timer')">✕</button>
+    </div>
+  </div>
+  <div class="win-body timer-body">
+    <div class="timer-mode-tabs">
+      <button class="t-tab active" onclick="setTimerMode('pomodoro',this)">pomodoro</button>
+      <button class="t-tab" onclick="setTimerMode('short',this)">short break</button>
+      <button class="t-tab" onclick="setTimerMode('long',this)">long break</button>
+    </div>
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring" viewBox="0 0 200 200">
+        <circle class="ring-bg" cx="100" cy="100" r="88"/>
+        <circle class="ring-prog" id="ringProg" cx="100" cy="100" r="88"
+          stroke-dasharray="553" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-display" id="timerDisplay">25:00</div>
+    </div>
+    <div class="timer-controls">
+      <button onclick="startTimer()" id="timerStartBtn">▶ start</button>
+      <button onclick="resetTimer()">↺ reset</button>
+    </div>
+    <div class="timer-session">session <span id="sessionCount">1</span> / 4</div>
+  </div>
+</div>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
