@@ -1,5 +1,6 @@
 <!-- start : 1:14PM , 6/04/2026.. -->
- 
+<!-- 6/04/2026 , 6:09PM -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,6 +57,14 @@
       <div class="icon-img">⏰</div>
       <span>Study<br/>Timer</span>
     </div>
+    <div class="desk-icon" onclick="openApp('settings')">
+      <div class="icon-img">⚙️</div>
+      <span>Settings</span>
+    </div>
+    <div class="desk-icon" onclick="openGuide()">
+      <div class="icon-img">💡</div>
+      <span>Guide</span>
+    </div>
   </div>
 
   <!-- windows container -->
@@ -85,7 +94,10 @@
       <div class="taskbar-apps" id="taskbarApps"></div>
     </div>
     <div class="taskbar-right">
-      <div class="taskbar-weather">☀️ 34°C</div>
+      <div class="taskbar-theme-btns">
+        <button class="tb-icon-btn" onclick="toggleTheme()" id="themeToggleBtn" title="toggle light/dark">🌙</button>
+        <button class="tb-icon-btn" onclick="toggleBrightness()" title="brightness">☀️</button>
+      </div>
       <div class="taskbar-vol" onclick="toggleMiniPlayer()" title="toggle mini player">🎵</div>
       <div class="taskbar-clock" id="clock">00:00</div>
     </div>
@@ -106,6 +118,7 @@
       <div class="start-item" onclick="openApp('3d');toggleStartMenu()">🌌 3D Mode</div>
       <div class="start-item" onclick="openApp('notes');toggleStartMenu()">📝 Notes</div>
       <div class="start-item" onclick="openApp('timer');toggleStartMenu()">⏰ Study Timer</div>
+      <div class="start-item" onclick="openApp('settings');toggleStartMenu()">⚙️ Settings</div>
     </div>
     <div class="start-footer">
       <div class="start-item" onclick="toggleStartMenu()">🔴 Close Menu</div>
@@ -142,23 +155,23 @@
         <div class="subject-list">
           <div class="subject-item">
             <div class="subj-name">Mathematics</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:78%;--c:#00ffcc;"></div></div>
-            <span class="prog-pct">78%</span>
-          </div>
-          <div class="subject-item">
-            <div class="subj-name">Science</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:65%;--c:#ff6eb4;"></div></div>
-            <span class="prog-pct">65%</span>
-          </div>
-          <div class="subject-item">
-            <div class="subj-name">English</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:90%;--c:#ffe066;"></div></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:90%;--c:#00ffcc;"></div></div>
             <span class="prog-pct">90%</span>
           </div>
           <div class="subject-item">
-            <div class="subj-name">History</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:52%;--c:#a78bfa;"></div></div>
-            <span class="prog-pct">52%</span>
+            <div class="subj-name">Science</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:97%;--c:#ff6eb4;"></div></div>
+            <span class="prog-pct">97%</span>
+          </div>
+          <div class="subject-item">
+            <div class="subj-name">English</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:89%;--c:#ffe066;"></div></div>
+            <span class="prog-pct">89%</span>
+          </div>
+          <div class="subject-item">
+            <div class="subj-name">MSCS</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:92%;--c:#a78bfa;"></div></div>
+            <span class="prog-pct">92%</span>
           </div>
           <div class="subject-item">
             <div class="subj-name">ICT</div>
@@ -172,11 +185,11 @@
       <div class="dash-card">
         <h3 class="card-title">✅ tasks</h3>
         <div class="task-list">
-          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> Math homework pg.42</label>
-          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> Science lab report</label>
-          <label class="task-item done"><input type="checkbox" checked onchange="strikeTask(this)" /> Read Chapter 5</label>
-          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> ICT PETA project</label>
-          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> History essay draft</label>
+          <label class="task-item done"><input type="checkbox" checked onchange="strikeTask(this)" /> complete math notebook</label>
+          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> ICT coding project</label>
+          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> ap and esp notebook</label>
+          <label class="task-item done"><input type="checkbox" checked onchange="strikeTask(this)" /> EXAMS!!!!!!!</label>
+          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> english PETA</label>
         </div>
         <div class="add-task">
           <input type="text" id="newTaskInput" placeholder="add new task..." />
@@ -187,7 +200,21 @@
       <!-- streak + stats -->
       <div class="dash-card dash-card-wide">
         <h3 class="card-title">📅 study streak</h3>
+        <div class="streak-stats">
+          <span class="streak-count">🔥 <strong>12</strong> day streak</span>
+          <span class="streak-best">best: <strong>21</strong> days</span>
+          <span class="streak-total">total: <strong>47</strong> days studied</span>
+        </div>
         <div class="streak-grid" id="streakGrid"></div>
+        <div class="streak-legend">
+          <span>less</span>
+          <div class="sl-box sl-0"></div>
+          <div class="sl-box sl-1"></div>
+          <div class="sl-box sl-2"></div>
+          <div class="sl-box sl-3"></div>
+          <div class="sl-box sl-4"></div>
+          <span>more</span>
+        </div>
       </div>
     </div>
   </div>
@@ -243,7 +270,7 @@
   </div>
   <div class="win-body music-body">
     <div class="music-header">
-      <h2>top 5 music i listen to everytime i study :)</h2>
+      <h2> short instrumentals i listen while studying :) </h2>
       <div class="music-mode-btns">
         <button class="mode-btn active" onclick="setMusicMode('full',this)">full player</button>
         <button class="mode-btn" onclick="setMusicMode('mini',this)">mini</button>
@@ -325,7 +352,7 @@
     </div>
     <div class="notes-area" id="noteArea" contenteditable="true" spellcheck="false">
       <!-- start typing your notes here... -->
-      <p>hey, this is your notepad. type anything here :)</p>
+      <p>hellohello, this is your notepad. type anything here :)</p>
     </div>
     <div class="notes-footer" id="notesFooter">0 words</div>
   </div>
@@ -364,6 +391,115 @@
   </div>
 </div>
 </template>
+
+
+<!-- settings template -->
+<template id="tpl-settings">
+<div class="app-window" id="win-settings" style="top:90px;left:260px;width:420px;height:500px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'win-settings')">
+    <span class="win-title">⚙️ Settings</span>
+    <div class="win-btns">
+      <button class="win-min" onclick="minimizeWin('win-settings')">_</button>
+      <button class="win-close" onclick="closeApp('settings','win-settings')">✕</button>
+    </div>
+  </div>
+  <div class="win-body settings-body">
+
+    <!-- profile section -->
+    <div class="settings-section">
+      <div class="settings-section-title">👤 profile</div>
+      <div class="settings-profile">
+        <div class="settings-avatar-wrap" onclick="cycleAvatar()">
+          <div class="settings-avatar" id="settingsAvatar">👩‍💻</div>
+          <div class="settings-avatar-change">✏️</div>
+        </div>
+        <div class="settings-profile-fields">
+          <div class="settings-field">
+            <label>display name</label>
+            <input type="text" id="settingsName" value="Student User" placeholder="your name..." />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- status section -->
+    <div class="settings-section">
+      <div class="settings-section-title">💬 status</div>
+      <div class="status-options" id="statusOptions">
+        <div class="status-opt selected" data-status="🍎 STUDYING HARD!" onclick="selectStatus(this)">
+          <span class="status-opt-emoji">🍎</span>
+          <span>STUDYING HARD!</span>
+        </div>
+        <div class="status-opt" data-status="🍌 studying.." onclick="selectStatus(this)">
+          <span class="status-opt-emoji">🍌</span>
+          <span>studying..</span>
+        </div>
+        <div class="status-opt" data-status="🍏 light study!" onclick="selectStatus(this)">
+          <span class="status-opt-emoji">🍏</span>
+          <span>light study!</span>
+        </div>
+        <div class="status-opt" data-status="🎀 resting!" onclick="selectStatus(this)">
+          <span class="status-opt-emoji">🎀</span>
+          <span>resting!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- appearance section -->
+    <div class="settings-section">
+      <div class="settings-section-title">🎨 appearance</div>
+      <div class="theme-row" style="margin-bottom:12px;">
+        <span class="theme-label">dark / light mode</span>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="settingsThemeBtn">
+          <div class="toggle-pill"></div>
+          <span id="settingsThemeLabel">dark</span>
+        </button>
+      </div>
+      <div class="brightness-row">
+        <label>brightness</label>
+        <input type="range" min="60" max="130" value="100" id="brightnessSlider" oninput="applyBrightness(this.value)" />
+        <span class="brightness-val" id="brightnessVal">100%</span>
+      </div>
+    </div>
+
+  </div>
+  <button class="settings-save-btn" onclick="saveSettings()">save changes</button>
+</div>
+</template>
+
+<!-- GUIDE OVERLAY -->
+<div id="guideOverlay" class="guide-overlay hidden">
+  <div class="guide-backdrop" onclick="closeGuide()"></div>
+  <div class="guide-modal">
+    <button class="guide-close-x" onclick="closeGuide()">✕</button>
+
+    <!-- step indicators -->
+    <div class="guide-steps-dots" id="guideDots"></div>
+
+    <!-- slides container -->
+    <div class="guide-slides" id="guideSlides"></div>
+
+    <!-- nav -->
+    <div class="guide-nav">
+      <button class="guide-btn guide-btn-ghost" id="guidePrevBtn" onclick="guideStep(-1)">← back</button>
+      <span class="guide-page-label" id="guidePageLabel">1 / 7</span>
+      <button class="guide-btn guide-btn-main" id="guideNextBtn" onclick="guideStep(1)">next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIRST VISIT WELCOME -->
+<div id="welcomeModal" class="welcome-modal hidden">
+  <div class="welcome-inner">
+    <div class="welcome-emoji">👋</div>
+    <h2 class="welcome-title">welcome to studentOS!</h2>
+    <p class="welcome-sub">looks like it's your first time here :) want a quick tour? it only takes like 2 minutes of reading, i promise it's worth it!!</p>
+    <div class="welcome-btns">
+      <button class="guide-btn guide-btn-main" onclick="startGuide()">yeah, show me around!</button>
+      <button class="guide-btn guide-btn-ghost" onclick="dismissWelcome()">i'll figure it out!</button>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
