@@ -1,5 +1,5 @@
-// app.js — studentos main logic
-// ok so i spent way too long on this..
+// app.js, studentos main logic
+// ok so i think spent way too long on this
 
 // GLOBALS
 let openApps = {}; // tracks which apps are open
@@ -54,10 +54,21 @@ window.addEventListener("load", runLoader);
 function initDesktop() {
   startClock();
   initParticles();
-  buildStreakGrid();
+  // load saved profile into start menu on boot
+  const savedName = localStorage.getItem("sos_name");
+  const savedStatus = localStorage.getItem("sos_status");
+  const savedAvatar = localStorage.getItem("sos_avatar");
+  if (savedName || savedAvatar || savedStatus) {
+    applyProfileToUI(
+      savedName || "Student User",
+      savedStatus || "🍎 studying hard",
+      savedAvatar || "👤",
+    );
+  }
+  setTimeout(maybeShowWelcome, 600);
 }
 
-// CLOCK
+// CLOCk
 function startClock() {
   function tick() {
     const now = new Date();
@@ -70,7 +81,7 @@ function startClock() {
   setInterval(tick, 1000);
 }
 
-// PARTICLES
+// paRTICLES
 function initParticles() {
   const canvas = document.getElementById("particles");
   const ctx = canvas.getContext("2d");
@@ -139,9 +150,16 @@ function openApp(appId) {
   // post-open init
   if (appId === "3d") setTimeout(init3D, 50);
   if (appId === "music") initMusicPlayer();
-  if (appId === "dashboard") animateProgressBars();
+  if (appId === "dashboard") {
+    animateProgressBars();
+    buildStreakGrid();
+    const savedAvatar = localStorage.getItem("sos_avatar") || "👩‍💻";
+    const dashAvatar = clone.querySelector(".dash-avatar");
+    if (dashAvatar) dashAvatar.textContent = savedAvatar;
+  }
   if (appId === "notes") initNotes();
   if (appId === "timer") initTimer();
+  if (appId === "settings") setTimeout(loadSettingsIntoPanel, 0);
 
   // click to bring to front
   clone.addEventListener("mousedown", () => bringToFront(clone));
@@ -276,7 +294,7 @@ function addTask() {
   input.value = "";
 }
 
-// build the github-style streak grid
+// build the github-style streak grid!!
 function buildStreakGrid() {
   const grid = document.getElementById("streakGrid");
   if (!grid) return;
@@ -426,7 +444,7 @@ function updateTimerRing() {
   ring.style.strokeDashoffset = circumference * (1 - progress);
 }
 
-// 3D (canvas-based, no three.js needed)
+// 3D canvas-based (just for fuuuunnn)
 let threeCtx = null;
 let threeAngle = 0;
 let threeMouseX = 0,
@@ -465,6 +483,10 @@ function init3D() {
 
   draw3D();
 }
+
+// just a fun little canvas 3d renderer i made for the dashboard
+// not using any libs or anything, super basic but looks kinda cool :)
+// you can change the shape and color in the 3d app settings!!
 
 function stopThreeJS() {
   if (threeAnim) cancelAnimationFrame(threeAnim);
@@ -569,6 +591,8 @@ function draw3D() {
   threeAnim = requestAnimationFrame(draw3D);
 }
 
+// this ended up way more complex than i expected, but it was fun to build and looks pretty cool
+
 function drawCube(ctx, cx, cy, fov, s, rx, ry, colMain, colDim, colGlow) {
   const verts = [
     [-1, -1, -1],
@@ -636,31 +660,33 @@ function drawCube(ctx, cx, cy, fov, s, rx, ry, colMain, colDim, colGlow) {
 }
 
 function drawSphere(ctx, cx, cy, s, colMain, rgb) {
-  // fake sphere with layered circles
-  for (let i = 8; i >= 0; i--) {
-    const t = i / 8;
-    const r = s * Math.sin(Math.acos(1 - t));
-    ctx.beginPath();
-    ctx.arc(cx, cy - s * (1 - t * 2), r, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.1 + t * 0.2})`;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
-  // main circle
+  const rx = threeMouseY * 0.4;
+  const ry = threeAngle;
+  const fov = 300;
+  const latLines = 8;
+  const lonLines = 12;
+  const segSteps = 48;
+
+  // filled sphere base with radial gradient (shading illusion)
   ctx.beginPath();
   ctx.arc(cx, cy, s, 0, Math.PI * 2);
   const grd = ctx.createRadialGradient(
-    cx - s * 0.3,
-    cy - s * 0.3,
-    s * 0.1,
+    cx - s * 0.35,
+    cy - s * 0.35,
+    s * 0.05,
     cx,
     cy,
     s,
   );
-  grd.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.6)`);
-  grd.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0.05)`);
+  grd.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`);
+  grd.addColorStop(0.5, `rgba(${rgb.r},${rgb.g},${rgb.b},0.15)`);
+  grd.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0.02)`);
   ctx.fillStyle = grd;
   ctx.fill();
+
+  // outer glow ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, s, 0, Math.PI * 2);
   ctx.strokeStyle = colMain;
   ctx.lineWidth = 2;
   ctx.shadowColor = colMain;
@@ -668,24 +694,75 @@ function drawSphere(ctx, cx, cy, s, colMain, rgb) {
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // latitude lines
-  for (let lat = -3; lat <= 3; lat++) {
-    const y0 = cy + lat * (s / 3.5);
-    const r = Math.sqrt(Math.max(0, s * s - (y0 - cy) * (y0 - cy)));
+  // helper: project 3D point on sphere surface
+  function spherePt(lat, lon) {
+    const x = s * Math.cos(lat) * Math.cos(lon);
+    const y = s * Math.sin(lat);
+    const z = s * Math.cos(lat) * Math.sin(lon);
+    const rot = rotatePoint(x, y, z, rx, ry);
+    return { proj: project(rot.x, rot.y, rot.z, cx, cy, fov), z: rot.z };
+  }
+
+  // latitude lines (horizontal rings)
+  for (let i = 1; i < latLines; i++) {
+    const lat = -Math.PI / 2 + (i / latLines) * Math.PI;
     ctx.beginPath();
-    ctx.ellipse(
-      cx,
-      y0,
-      r,
-      r * 0.2 + Math.abs(threeAngle % 0.1),
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.15)`;
-    ctx.lineWidth = 1;
+    let first = true;
+    for (let j = 0; j <= segSteps; j++) {
+      const lon = (j / segSteps) * Math.PI * 2;
+      const { proj, z } = spherePt(lat, lon);
+      // only draw front-facing segments (z >= 0 in rotated space)
+      if (z >= -s * 0.1) {
+        if (first) {
+          ctx.moveTo(proj.x, proj.y);
+          first = false;
+        } else ctx.lineTo(proj.x, proj.y);
+      } else {
+        first = true;
+      }
+    }
+    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.3)`;
+    ctx.lineWidth = 0.8;
     ctx.stroke();
   }
+
+  // longitude lines (vertical meridians)
+  for (let i = 0; i < lonLines; i++) {
+    const lon = (i / lonLines) * Math.PI * 2;
+    ctx.beginPath();
+    let first = true;
+    for (let j = 0; j <= segSteps; j++) {
+      const lat = -Math.PI / 2 + (j / segSteps) * Math.PI;
+      const { proj, z } = spherePt(lat, lon);
+      if (z >= -s * 0.1) {
+        if (first) {
+          ctx.moveTo(proj.x, proj.y);
+          first = false;
+        } else ctx.lineTo(proj.x, proj.y);
+      } else {
+        first = true;
+      }
+    }
+    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.3)`;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  }
+
+  // highlight dot (top-left specular)
+  const hlGrd = ctx.createRadialGradient(
+    cx - s * 0.3,
+    cy - s * 0.3,
+    0,
+    cx - s * 0.3,
+    cy - s * 0.3,
+    s * 0.4,
+  );
+  hlGrd.addColorStop(0, `rgba(255,255,255,0.25)`);
+  hlGrd.addColorStop(1, `rgba(255,255,255,0)`);
+  ctx.beginPath();
+  ctx.arc(cx, cy, s, 0, Math.PI * 2);
+  ctx.fillStyle = hlGrd;
+  ctx.fill();
 }
 
 function drawTorus(ctx, cx, cy, fov, s, rx, ry) {
@@ -736,38 +813,40 @@ function drawTorus(ctx, cx, cy, fov, s, rx, ry) {
 }
 
 // MUSIC PLAYER
+// CHANGE THIS SOON
+
 const playlist = [
   {
-    title: "Study Beats 01",
-    artist: "Chill Lo-Fi",
+    title: "PLACEHOLDER1",
+    artist: "PLACEHOLDER1",
     emoji: "🎵",
     file: "music1.mp3",
     img: "image1.jpg",
   },
   {
-    title: "Focus Flow",
-    artist: "Ambient Vibes",
+    title: "PLACEHOLDER2",
+    artist: "PLACEHOLDER2",
     emoji: "🌊",
     file: "music2.mp3",
     img: "image2.jpg",
   },
   {
-    title: "Night Coding",
-    artist: "Neon Sound",
+    title: "PLACEHOLDER3",
+    artist: "PLACEHOLDER3",
     emoji: "🌙",
     file: "music3.mp3",
     img: "image3.jpg",
   },
   {
-    title: "Calm Mind",
-    artist: "Relax Lab",
+    title: "PLACEHOLDER4",
+    artist: "PLACEHOLDER4",
     emoji: "🍃",
     file: "music4.mp3",
     img: "image4.jpg",
   },
   {
-    title: "Deep Focus",
-    artist: "Study Zone",
+    title: "PLACEHOLDER5",
+    artist: "PLACEHOLDER5",
     emoji: "🔮",
     file: "music5.mp3",
     img: "image5.jpg",
@@ -1032,3 +1111,315 @@ document.addEventListener("keydown", (e) => {
   if (e.code === "ArrowRight" && e.ctrlKey) nextSong();
   if (e.code === "ArrowLeft" && e.ctrlKey) prevSong();
 });
+
+// SETTINGS
+
+const AVATARS = [
+  "👩‍💻",
+  "👨‍💻",
+  "🧑‍💻",
+  "👧",
+  "👦",
+  "🧑",
+  "👩‍🎓",
+  "👨‍🎓",
+  "🐱",
+  "🦊",
+  "🐼",
+  "🌸",
+];
+let avatarIdx = 0;
+
+function cycleAvatar() {
+  avatarIdx = (avatarIdx + 1) % AVATARS.length;
+  const el = document.getElementById("settingsAvatar");
+  if (el) el.textContent = AVATARS[avatarIdx];
+}
+
+function selectStatus(el) {
+  document
+    .querySelectorAll(".status-opt")
+    .forEach((o) => o.classList.remove("selected"));
+  el.classList.add("selected");
+}
+
+function saveSettings() {
+  const nameEl = document.getElementById("settingsName");
+  const name = nameEl ? nameEl.value.trim() || "Student User" : "Student User";
+
+  const selectedOpt = document.querySelector(".status-opt.selected");
+  const status = selectedOpt ? selectedOpt.dataset.status : "🍎 STUDYING HARD!";
+
+  const avatar = document.getElementById("settingsAvatar")?.textContent || "👩‍💻";
+
+  // persist to localStorage
+  localStorage.setItem("sos_name", name);
+  localStorage.setItem("sos_status", status);
+  localStorage.setItem("sos_avatar", avatar);
+  localStorage.setItem("sos_avatarIdx", avatarIdx);
+
+  applyProfileToUI(name, status, avatar);
+
+  // flash save button
+  const btn = document.querySelector(".settings-save-btn");
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = "✅ saved!";
+    setTimeout(() => {
+      btn.textContent = orig;
+    }, 1200);
+  }
+}
+
+function applyProfileToUI(name, status, avatar) {
+  const startName = document.querySelector(".start-name");
+  const startStatus = document.querySelector(".start-status");
+  const startAvatar = document.querySelector(".start-avatar");
+  if (startName) startName.textContent = name;
+  if (startStatus) startStatus.textContent = status;
+  if (startAvatar) startAvatar.textContent = avatar;
+
+  const dashAvatar = document.querySelector(".dash-avatar");
+  if (dashAvatar) dashAvatar.textContent = avatar;
+}
+
+function loadSettingsIntoPanel() {
+  const name = localStorage.getItem("sos_name") || "Student User";
+  const status = localStorage.getItem("sos_status") || "🍎 STUDYING HARD!";
+  const avatar = localStorage.getItem("sos_avatar") || "👩‍💻";
+  const savedIdx = parseInt(localStorage.getItem("sos_avatarIdx") || "0");
+
+  avatarIdx = savedIdx;
+
+  const nameEl = document.getElementById("settingsName");
+  if (nameEl) nameEl.value = name;
+
+  const avatarEl = document.getElementById("settingsAvatar");
+  if (avatarEl) avatarEl.textContent = avatar;
+
+  document.querySelectorAll(".status-opt").forEach((o) => {
+    o.classList.toggle("selected", o.dataset.status === status);
+  });
+}
+
+// THEME
+
+let isLightMode = false;
+
+function toggleTheme() {
+  isLightMode = !isLightMode;
+  document.body.classList.toggle("light-mode", isLightMode);
+
+  // taskbar toggle btn emoji
+  const tbBtn = document.getElementById("themeToggleBtn");
+  if (tbBtn) tbBtn.textContent = isLightMode ? "☀️" : "🌙";
+
+  // settings label
+  const lbl = document.getElementById("settingsThemeLabel");
+  if (lbl) lbl.textContent = isLightMode ? "light" : "dark";
+}
+
+// BRIGHTNESS
+let brightnessLevels = [70, 85, 100, 115];
+let brightIdx = 2; // start at 100%
+
+function toggleBrightness() {
+  brightIdx = (brightIdx + 1) % brightnessLevels.length;
+  applyBrightness(brightnessLevels[brightIdx]);
+  // sync slider if settings open
+  const slider = document.getElementById("brightnessSlider");
+  const val = document.getElementById("brightnessVal");
+  if (slider) slider.value = brightnessLevels[brightIdx];
+  if (val) val.textContent = brightnessLevels[brightIdx] + "%";
+}
+
+function applyBrightness(val) {
+  document.body.style.setProperty("--brightness", val / 100);
+  const valEl = document.getElementById("brightnessVal");
+  if (valEl) valEl.textContent = val + "%";
+}
+
+// GUIDE / TOUR SYSTEM
+// just a simple array of pages that the start menu guide walks through!
+// my vocabulary is a bit basic so "guide" and "tour" are interchangeable here, oops
+
+const guidePages = [
+  {
+    emoji: "🖥️",
+    title: "welcome to studentOS!",
+    body: `ok so basically this whole thing is built to feel like a little operating system, but for studying. there's a desktop, draggable windows, a taskbar, the whole deal. it's supposed to make studying feel a bit less boring!<br><br>you can <strong>drag windows</strong> by their title bar, <strong>minimize</strong> them with the _ button, or <strong>close</strong> them with ✕. windows stack on top of each other just like a real OS!`,
+    tip: "💡 tip: click a minimized app in the taskbar at the bottom to bring it back up",
+  },
+  {
+    emoji: "📚",
+    title: "student dashboard",
+    body: `this is like your home base. open it from the desktop icon or the start menu. it shows:<br><br>
+<strong>📊 subjects</strong> >> your progress bars for each class. they animate when the window opens which is super satisfying!! <br><br>
+<strong>✅ tasks</strong> >> your to-do list. check things off, add new ones with the input at the bottom. checked items get crossed out automatically!<br><br>
+<strong>📅 study streak</strong> >> the little grid at the bottom is like a heatmap of your study days (think github contributions but make it school)`,
+    tip: "💡 tip: the streak grid shows the last 84 days — darker pink = more studying that day",
+  },
+  {
+    emoji: "⏰",
+    title: "study timer (pomodoro!)",
+    body: `if you've never heard of the pomodoro technique - basically you study for 25 minutes, take a 5 minute break, repeat. it genuinely works and this timer does it for you!<br><br>
+<strong>pomodoro</strong> = 25 min focus session<br>
+<strong>short break</strong> = 5 min<br>
+<strong>long break</strong> = 15 min (after 4 sessions)<br><br>
+the ring around the clock fills up as time passes, and it tracks which session you're on (1 through 4). after 4 pomodoros you've earned a long break!!`,
+    tip: "💡 tip: the ring color changes depending on the mode — blue for focus, teal for short break, purple for long",
+  },
+  {
+    emoji: "🎵",
+    title: "music player",
+    body: `okay this one is just for the funsies and focus!! there are 5 tracks preloaded and you can switch between them in the playlist on the right.<br><br>
+there are also 3 <strong>display modes</strong>:<br>
+<strong>full player</strong> >> the default, shows album art + controls<br>
+<strong>mini</strong> >> hides the now-playing panel, just the playlist<br>
+<strong>bg mode</strong> >> completely hides the UI so you can keep the window open without it being in the way<br><br>
+the mini player at the bottom right stays visible no matter what, so you can always control playback`,
+    tip: "💡 tip: space bar = play/pause, ctrl+→/← = skip forward/back (as long as you're not typing)",
+  },
+  {
+    emoji: "📝",
+    title: "notes app",
+    body: `quick and simple. just a text area where you can jot stuff down! supports basic formatting:<br><br>
+<strong>B</strong> = bold, <strong>I</strong> = italic, <strong>U</strong> = underline<br>
+you can also change the text color (cyan, pink, or yellow — very on-brand)<br><br>
+the word count updates live at the bottom. and if you want to save what you wrote, hit <strong>💾 save</strong> and it downloads as a .txt file to your computer. it doesn't auto-save between sessions though, so heads up!`,
+    tip: "💡 tip: select text first before clicking bold/italic/etc, just like in any normal text editor",
+  },
+  {
+    emoji: "🌌",
+    title: "3d interactive mode",
+    body: `this one is just for fun honestly. it's a canvas-based 3D renderer (no libraries, built from scratch!!) that renders three shapes:<br><br>
+<strong>cube</strong> >> classic 3d shape! spins smoothly with depth shading on each face<br>
+<strong>sphere</strong> >> now actually a proper 3D sphere with latitude + longitude wireframe lines that rotate with your mouse<br>
+<strong>torus</strong> >> a donut shape. it's the most complex one and it looks kinda hypnotic<br><br>
+<strong>move your mouse</strong> over the canvas to tilt it, <strong>scroll</strong> to zoom in/out, and use the color picker to change the glow color`,
+    tip: "💡 tip: try the torus with a yellow color!",
+  },
+  {
+    emoji: "⚙️",
+    title: "settings + customization",
+    body: `you can personalize the OS a little from settings:<br><br>
+<strong>👤 profile</strong> >> set your display name and click the avatar to cycle through different emoji avatars. this shows up in the start menu and dashboard<br><br>
+<strong>💬 status</strong> >> pick a study mode status (studying hard, light study, resting, etc)<br><br>
+<strong>🎨 appearance</strong> >> toggle dark/light mode, adjust brightness<br><br>
+<strong>important:</strong> hit <em>save changes</em> to actually keep everything — it saves to your browser so it'll still be there next time you open the page!`,
+    tip: "💡 tip: click the avatar emoji in settings to cycle through 12 different options including animals 🐱🦊🐼",
+  },
+];
+
+let guideCurrent = 0;
+
+// more stuff about guidessss....
+
+function buildGuideSlides() {
+  const container = document.getElementById("guideSlides");
+  const dots = document.getElementById("guideDots");
+  if (!container || !dots) return;
+
+  container.innerHTML = "";
+  dots.innerHTML = "";
+
+  guidePages.forEach((page, i) => {
+    const slide = document.createElement("div");
+    slide.className = "guide-slide" + (i === 0 ? " active" : "");
+    slide.id = "gslide-" + i;
+    slide.innerHTML = `
+      <div class="gslide-emoji">${page.emoji}</div>
+      <h3 class="gslide-title">${page.title}</h3>
+      <div class="gslide-body">${page.body}</div>
+      <div class="gslide-tip">${page.tip}</div>
+    `;
+    container.appendChild(slide);
+
+    const dot = document.createElement("div");
+    dot.className = "guide-dot" + (i === 0 ? " active" : "");
+    dot.id = "gdot-" + i;
+    dot.onclick = () => goToGuideSlide(i);
+    dots.appendChild(dot);
+  });
+}
+
+// const const CONST!!!!!
+
+function goToGuideSlide(idx) {
+  const prev = document.getElementById("gslide-" + guideCurrent);
+  const prevDot = document.getElementById("gdot-" + guideCurrent);
+  if (prev) prev.classList.remove("active");
+  if (prevDot) prevDot.classList.remove("active");
+
+  guideCurrent = idx;
+
+  const next = document.getElementById("gslide-" + guideCurrent);
+  const nextDot = document.getElementById("gdot-" + guideCurrent);
+  if (next) next.classList.add("active");
+  if (nextDot) nextDot.classList.add("active");
+
+  const label = document.getElementById("guidePageLabel");
+  if (label) label.textContent = `${guideCurrent + 1} / ${guidePages.length}`;
+
+  const prevBtn = document.getElementById("guidePrevBtn");
+  const nextBtn = document.getElementById("guideNextBtn");
+  if (prevBtn)
+    prevBtn.style.visibility = guideCurrent === 0 ? "hidden" : "visible";
+  if (nextBtn)
+    nextBtn.textContent =
+      guideCurrent === guidePages.length - 1 ? "done ✓" : "next →";
+}
+
+function guideStep(dir) {
+  const next = guideCurrent + dir;
+  if (next >= guidePages.length) {
+    closeGuide();
+    return;
+  }
+  if (next < 0) return;
+  goToGuideSlide(next);
+}
+
+function openGuide() {
+  guideCurrent = 0;
+  buildGuideSlides();
+  const overlay = document.getElementById("guideOverlay");
+  if (overlay) {
+    overlay.classList.remove("hidden");
+    requestAnimationFrame(() => overlay.classList.add("visible"));
+  }
+  goToGuideSlide(0);
+}
+
+function closeGuide() {
+  const overlay = document.getElementById("guideOverlay");
+  if (overlay) {
+    overlay.classList.remove("visible");
+    setTimeout(() => overlay.classList.add("hidden"), 280);
+  }
+}
+
+function startGuide() {
+  dismissWelcome();
+  setTimeout(openGuide, 200);
+}
+
+function dismissWelcome() {
+  localStorage.setItem("sos_seen_welcome", "1");
+  const modal = document.getElementById("welcomeModal");
+  if (modal) {
+    modal.classList.add("fade-out");
+    setTimeout(() => modal.classList.add("hidden"), 300);
+  }
+}
+
+function maybeShowWelcome() {
+  const seen = localStorage.getItem("sos_seen_welcome");
+  if (!seen) {
+    const modal = document.getElementById("welcomeModal");
+    if (modal) {
+      modal.classList.remove("hidden");
+      requestAnimationFrame(() => modal.classList.add("visible"));
+    }
+  }
+}
