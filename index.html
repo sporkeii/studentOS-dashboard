@@ -1,12 +1,18 @@
+<!-- some stuff -->
 <!-- start : 1:14PM , 6/04/2026.. -->
-<!-- 6/04/2026 , 6:09PM -->
+<!-- 6/04/2026 , 9:23PM -->
+
+<!-- 6/05/2026, 12:36PM -->
+<!-- 6/06/2026, 12:19AM.. -->
+
+<!-- 6/06/2026 , 9:49AM -->
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudentOS v2.0 — Study Edition</title>
+  <title>studentOS v2.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
@@ -16,8 +22,8 @@
 <!-- loading screen -->
 <div id="loader">
   <div class="loader-inner">
-    <div class="loader-logo">StudentOS</div>
-    <div class="loader-version">version 2.0 — study edition</div>
+    <div class="loader-logo">studentOS</div>
+    <div class="loader-version">version 2.0 - made by caelyn !</div>
     <div class="loader-bar-wrap">
       <div class="loader-bar" id="loaderBar"></div>
     </div>
@@ -109,6 +115,7 @@
       <div class="start-avatar">👤</div>
       <div>
         <div class="start-name">Student User</div>
+        <!-- placeholder status -->
         <div class="start-status">🟢 studying hard</div>
       </div>
     </div>
@@ -131,7 +138,7 @@
 
 <!-- dashboard template -->
 <template id="tpl-dashboard">
-<div class="app-window" id="win-dashboard" style="top:60px;left:80px;width:700px;height:520px;">
+<div class="app-window" id="win-dashboard" style="top:60px;left:60px;width:780px;height:560px;">
   <div class="win-titlebar" onmousedown="startDrag(event,'win-dashboard')">
     <span class="win-title">📚 Student Dashboard</span>
     <div class="win-btns">
@@ -140,81 +147,78 @@
     </div>
   </div>
   <div class="win-body dash-body">
+
+    <!-- welcome row -->
     <div class="dash-welcome">
       <div class="dash-avatar">👩‍💻</div>
       <div>
         <h2 class="dash-greeting">hey, welcome back! 👋</h2>
-        <p class="dash-sub">you have <span class="accent">3 tasks</span> due today · streak: <span class="streak">🔥 12 days</span></p>
+        <p class="dash-sub" id="dashSubLine">loading tasks...</p>
       </div>
     </div>
 
-    <div class="dash-grid">
-      <!-- subjects -->
-      <div class="dash-card">
+    <!-- main two-column layout -->
+    <div class="dash-main-cols">
+
+      <!-- LEFT: Subjects panel -->
+      <div class="dash-col dash-col-subjects">
         <h3 class="card-title">📊 subjects</h3>
-        <div class="subject-list">
-          <div class="subject-item">
-            <div class="subj-name">Mathematics</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:90%;--c:#00ffcc;"></div></div>
-            <span class="prog-pct">90%</span>
-          </div>
-          <div class="subject-item">
-            <div class="subj-name">Science</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:97%;--c:#ff6eb4;"></div></div>
-            <span class="prog-pct">97%</span>
-          </div>
-          <div class="subject-item">
-            <div class="subj-name">English</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:89%;--c:#ffe066;"></div></div>
-            <span class="prog-pct">89%</span>
-          </div>
-          <div class="subject-item">
-            <div class="subj-name">MSCS</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:92%;--c:#a78bfa;"></div></div>
-            <span class="prog-pct">92%</span>
-          </div>
-          <div class="subject-item">
-            <div class="subj-name">ICT</div>
-            <div class="prog-bar"><div class="prog-fill" style="width:95%;--c:#38bdf8;"></div></div>
-            <span class="prog-pct">95%</span>
-          </div>
+
+        <!-- subject tab pills -->
+        <div class="subj-tabs" id="subjTabs"></div>
+
+        <!-- subject detail panel -->
+        <div class="subj-detail" id="subjDetail">
+          <!-- filled by JS -->
         </div>
       </div>
 
-      <!-- tasks -->
-      <div class="dash-card">
-        <h3 class="card-title">✅ tasks</h3>
-        <div class="task-list">
-          <label class="task-item done"><input type="checkbox" checked onchange="strikeTask(this)" /> complete math notebook</label>
-          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> ICT coding project</label>
-          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> ap and esp notebook</label>
-          <label class="task-item done"><input type="checkbox" checked onchange="strikeTask(this)" /> EXAMS!!!!!!!</label>
-          <label class="task-item"><input type="checkbox" onchange="strikeTask(this)" /> english PETA</label>
-        </div>
-        <div class="add-task">
-          <input type="text" id="newTaskInput" placeholder="add new task..." />
-          <button onclick="addTask()">+</button>
-        </div>
-      </div>
+      <!-- RIGHT: General tasks + streak -->
+      <div class="dash-col dash-col-right">
 
-      <!-- streak + stats -->
-      <div class="dash-card dash-card-wide">
-        <h3 class="card-title">📅 study streak</h3>
-        <div class="streak-stats">
-          <span class="streak-count">🔥 <strong>12</strong> day streak</span>
-          <span class="streak-best">best: <strong>21</strong> days</span>
-          <span class="streak-total">total: <strong>47</strong> days studied</span>
+        <!-- general tasks -->
+        <div class="dash-card general-tasks-card">
+          <h3 class="card-title">🗂️ general tasks</h3>
+          <div class="task-list" id="generalTaskList"></div>
+          <div class="add-task">
+            <input type="text" id="newGenTaskInput" placeholder="add task (e.g. EXAMS!!!)" />
+            <button onclick="addGeneralTask()">+</button>
+          </div>
+          <div class="tasks-all-done hidden" id="generalAllDone">🎉 tasks completed!</div>
         </div>
-        <div class="streak-grid" id="streakGrid"></div>
-        <div class="streak-legend">
-          <span>less</span>
-          <div class="sl-box sl-0"></div>
-          <div class="sl-box sl-1"></div>
-          <div class="sl-box sl-2"></div>
-          <div class="sl-box sl-3"></div>
-          <div class="sl-box sl-4"></div>
-          <span>more</span>
+
+        <!-- streak mini -->
+        <div class="dash-card streak-mini-card">
+          <div class="streak-header-row">
+            <h3 class="card-title">🔥 streak</h3>
+            <button class="streak-log-btn" onclick="logStudyToday()" id="streakLogBtn">+ log today</button>
+          </div>
+          <div class="streak-stats">
+            <div class="streak-stat-box">
+              <div class="streak-stat-num" id="streakCurrent">12</div>
+              <div class="streak-stat-label">🔥 current</div>
+            </div>
+            <div class="streak-stat-box">
+              <div class="streak-stat-num" id="streakBest">21</div>
+              <div class="streak-stat-label">🏆 best</div>
+            </div>
+            <div class="streak-stat-box">
+              <div class="streak-stat-num" id="streakTotal">47</div>
+              <div class="streak-stat-label">📅 days</div>
+            </div>
+          </div>
+          <div class="streak-grid-wrap">
+            <div class="streak-grid" id="streakGrid"></div>
+          </div>
+          <div class="streak-legend">
+            <span>less</span>
+            <div class="sl-box sl-0"></div><div class="sl-box sl-1"></div>
+            <div class="sl-box sl-2"></div><div class="sl-box sl-3"></div>
+            <div class="sl-box sl-4"></div>
+            <span>more</span>
+          </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -270,7 +274,7 @@
   </div>
   <div class="win-body music-body">
     <div class="music-header">
-      <h2> short instrumentals i listen while studying :) </h2>
+      <h2>top 5 music i listen to everytime i study :)</h2>
       <div class="music-mode-btns">
         <button class="mode-btn active" onclick="setMusicMode('full',this)">full player</button>
         <button class="mode-btn" onclick="setMusicMode('mini',this)">mini</button>
@@ -295,7 +299,7 @@
             <div class="prog-fill-music" id="progFill"></div>
             <div class="prog-dot" id="progDot"></div>
           </div>
-          <div class="prog-total">3:45</div>
+          <div class="prog-total" id="progTotal">0:49</div>
         </div>
         <div class="np-controls">
           <button onclick="toggleShuffle()" id="shuffleBtn" title="shuffle">⇌</button>
@@ -303,6 +307,10 @@
           <button class="play-big" onclick="togglePlay()" id="playBtn">▶</button>
           <button onclick="nextSong()">▶▶</button>
           <button onclick="toggleLoop()" id="loopBtn" title="loop">↺</button>
+        </div>
+        <div class="np-volume">
+          <span class="vol-icon" id="volIcon">🔊</span>
+          <input type="range" min="0" max="1" step="0.02" value="1" id="volSlider" oninput="setVolume(this.value)" />
         </div>
         <div class="eq-bars" id="eqBars">
           <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
@@ -352,7 +360,7 @@
     </div>
     <div class="notes-area" id="noteArea" contenteditable="true" spellcheck="false">
       <!-- start typing your notes here... -->
-      <p>hellohello, this is your notepad. type anything here :)</p>
+      <p>hey, this is your notepad. type anything here :)</p>
     </div>
     <div class="notes-footer" id="notesFooter">0 words</div>
   </div>
@@ -479,10 +487,24 @@
     <!-- slides container -->
     <div class="guide-slides" id="guideSlides"></div>
 
+    <!-- theme picker (only visible on last slide) -->
+    <div class="guide-theme-picker hidden" id="guideThemePicker">
+      <button class="guide-theme-opt" id="guidePickDark" onclick="guidePickTheme('dark')">
+        <span class="gtp-icon">🌙</span>
+        <span class="gtp-label">dark mode</span>
+        <span class="gtp-desc">neon glows on deep dark</span>
+      </button>
+      <button class="guide-theme-opt" id="guidePickLight" onclick="guidePickTheme('light')">
+        <span class="gtp-icon">☀️</span>
+        <span class="gtp-label">light mode</span>
+        <span class="gtp-desc">soft pink on bright white</span>
+      </button>
+    </div>
+
     <!-- nav -->
     <div class="guide-nav">
       <button class="guide-btn guide-btn-ghost" id="guidePrevBtn" onclick="guideStep(-1)">← back</button>
-      <span class="guide-page-label" id="guidePageLabel">1 / 7</span>
+      <span class="guide-page-label" id="guidePageLabel">1 / 8</span>
       <button class="guide-btn guide-btn-main" id="guideNextBtn" onclick="guideStep(1)">next →</button>
     </div>
   </div>
@@ -492,8 +514,8 @@
 <div id="welcomeModal" class="welcome-modal hidden">
   <div class="welcome-inner">
     <div class="welcome-emoji">👋</div>
-    <h2 class="welcome-title">welcome to studentOS!</h2>
-    <p class="welcome-sub">looks like it's your first time here :) want a quick tour? it only takes like 2 minutes of reading, i promise it's worth it!!</p>
+    <h2 class="welcome-title">hey, welcome to StudentOS!</h2>
+    <p class="welcome-sub">looks like it's your first time here :) want a quick guide? it only takes like 2 minutes, i promise it's worth it</p>
     <div class="welcome-btns">
       <button class="guide-btn guide-btn-main" onclick="startGuide()">yeah, show me around!</button>
       <button class="guide-btn guide-btn-ghost" onclick="dismissWelcome()">i'll figure it out!</button>
