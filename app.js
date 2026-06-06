@@ -61,7 +61,7 @@ function initDesktop() {
   if (savedName || savedAvatar || savedStatus) {
     applyProfileToUI(
       savedName || "Student User",
-      savedStatus || "🍎 studying hard",
+      savedStatus || "🟢 studying hard",
       savedAvatar || "👤",
     );
   }
@@ -151,11 +151,7 @@ function openApp(appId) {
   if (appId === "3d") setTimeout(init3D, 50);
   if (appId === "music") initMusicPlayer();
   if (appId === "dashboard") {
-    animateProgressBars();
-    buildStreakGrid();
-    const savedAvatar = localStorage.getItem("sos_avatar") || "👩‍💻";
-    const dashAvatar = clone.querySelector(".dash-avatar");
-    if (dashAvatar) dashAvatar.textContent = savedAvatar;
+    initDashboard();
   }
   if (appId === "notes") initNotes();
   if (appId === "timer") initTimer();
@@ -257,61 +253,466 @@ document.addEventListener("mouseup", () => {
   dragging = null;
 });
 
-// DASHBOARD
-function animateProgressBars() {
-  // the bars animate via CSS transition on load
-  // just trigger a tiny reflow to restart them
-  const fills = document.querySelectorAll(".prog-fill");
-  fills.forEach((f) => {
-    const w = f.style.width;
-    f.style.width = "0%";
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        f.style.width = w;
-      }, 50);
-    });
+// =============================================
+// DASHBOARD — SUBJECTS + TASKS SYSTEM
+// =============================================
+
+const SUBJECT_COLORS = {
+  Mathematics: "#00ffcc",
+  Science: "#ff6eb4",
+  English: "#ffe066",
+  MSCS: "#a78bfa",
+  ICT: "#38bdf8",
+  "TLE/Robotics": "#fb923c",
+  Filipino: "#f472b6",
+  "AP/ESP": "#34d399",
+};
+
+// Task types and their weight ranges
+// PETA/project: 60-80%, notebook/book: 30-40%, other: 20-30%
+function getTaskWeight(name) {
+  const n = name.toLowerCase();
+  if (n.includes("peta") || n.includes("project") || n.includes("codemonkey"))
+    return 0.7;
+  if (n.includes("notebook") || n.includes("book") || n.includes("journal"))
+    return 0.35;
+  return 0.25;
+}
+
+// Initial subject task data
+const DEFAULT_SUBJECT_TASKS = {
+  Mathematics: [
+    { name: "math notebook", done: true },
+    { name: "math exercises", done: false },
+    { name: "math PETA", done: true },
+  ],
+  Science: [
+    { name: "science notebook", done: true },
+    { name: "science PETA", done: true },
+    { name: "reflection", done: true },
+  ],
+  English: [
+    { name: "english notebook", done: true },
+    { name: "english PETA", done: false },
+    { name: "iready", done: true },
+  ],
+  MSCS: [
+    { name: "mscs notebook", done: false },
+    { name: "mscs book", done: true },
+  ],
+  ICT: [
+    { name: "ICT coding project", done: false },
+    { name: "ICT notes", done: true },
+  ],
+  "TLE/Robotics": [
+    { name: "TLE journal", done: true },
+    { name: "TLE notes", done: true },
+    { name: "robotics codemonkey", done: true },
+  ],
+  Filipino: [
+    { name: "filipino notes", done: true },
+    { name: "filipino PETA", done: true },
+  ],
+  "AP/ESP": [
+    { name: "ap notes", done: false },
+    { name: "esp notes", done: true },
+  ],
+};
+
+const DEFAULT_GENERAL_TASKS = [
+  { name: "EXAMS!!!!!!", done: false },
+  { name: "study streak 💪", done: false },
+];
+
+let activeSubject = "Mathematics";
+
+function loadSubjectTasks() {
+  try {
+    const saved = localStorage.getItem("sos_subject_tasks");
+    return saved
+      ? JSON.parse(saved)
+      : JSON.parse(JSON.stringify(DEFAULT_SUBJECT_TASKS));
+  } catch {
+    return JSON.parse(JSON.stringify(DEFAULT_SUBJECT_TASKS));
+  }
+}
+function saveSubjectTasks(data) {
+  localStorage.setItem("sos_subject_tasks", JSON.stringify(data));
+}
+
+function loadGeneralTasks() {
+  try {
+    const saved = localStorage.getItem("sos_general_tasks");
+    return saved
+      ? JSON.parse(saved)
+      : JSON.parse(JSON.stringify(DEFAULT_GENERAL_TASKS));
+  } catch {
+    return JSON.parse(JSON.stringify(DEFAULT_GENERAL_TASKS));
+  }
+}
+function saveGeneralTasks(data) {
+  localStorage.setItem("sos_general_tasks", JSON.stringify(data));
+}
+
+// Compute weighted completion % for a subject
+function calcSubjectPct(tasks) {
+  if (!tasks || tasks.length === 0) return 0;
+  let totalW = 0,
+    doneW = 0;
+  tasks.forEach((t) => {
+    const w = getTaskWeight(t.name);
+    totalW += w;
+    if (t.done) doneW += w;
   });
+  return totalW === 0 ? 0 : Math.round((doneW / totalW) * 100);
+}
+
+function buildSubjectTabs() {
+  const container = document.getElementById("subjTabs");
+  if (!container) return;
+  container.innerHTML = "";
+  const subjects = Object.keys(SUBJECT_COLORS);
+  subjects.forEach((subj) => {
+    const btn = document.createElement("button");
+    btn.className = "subj-tab-btn" + (subj === activeSubject ? " active" : "");
+    btn.textContent = subj;
+    btn.style.setProperty("--sc", SUBJECT_COLORS[subj]);
+    btn.onclick = () => {
+      activeSubject = subj;
+      document
+        .querySelectorAll(".subj-tab-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderSubjectDetail();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function renderSubjectDetail() {
+  const panel = document.getElementById("subjDetail");
+  if (!panel) return;
+  const subjectData = loadSubjectTasks();
+  const tasks = subjectData[activeSubject] || [];
+  const pct = calcSubjectPct(tasks);
+  const color = SUBJECT_COLORS[activeSubject];
+  const allDone = tasks.length > 0 && tasks.every((t) => t.done);
+
+  panel.innerHTML = `
+    <div class="subj-detail-header">
+      <span class="subj-detail-name" style="color:${color}">${activeSubject}</span>
+      <span class="subj-detail-pct" style="color:${color}">${pct}%</span>
+    </div>
+    <div class="prog-bar subj-prog-bar">
+      <div class="prog-fill" style="width:${pct}%;--c:${color};"></div>
+    </div>
+    <div class="subj-task-list" id="subjTaskList">
+      ${tasks
+        .map(
+          (t, i) => `
+        <div class="task-row" id="strow-${i}">
+          <label class="task-item${t.done ? " struck" : ""}">
+            <input type="checkbox" ${t.done ? "checked" : ""} onchange="toggleSubjTask(${i},this)" />
+            ${t.name}
+            <span class="task-type-badge">${getTaskBadge(t.name)}</span>
+          </label>
+          <button class="task-del-btn" onclick="deleteSubjTask(${i})" title="delete">✕</button>
+        </div>
+      `,
+        )
+        .join("")}
+    </div>
+    ${allDone ? `<div class="tasks-all-done">🎉 tasks completed!</div>` : ""}
+    <div class="add-task subj-add-task">
+      <input type="text" id="newSubjTaskInput" placeholder="add task for ${activeSubject}..." />
+      <button onclick="addSubjTask()">+</button>
+    </div>
+  `;
+
+  // animate prog bar
+  const fill = panel.querySelector(".prog-fill");
+  if (fill) {
+    fill.style.width = "0%";
+    requestAnimationFrame(() =>
+      setTimeout(() => {
+        fill.style.width = pct + "%";
+      }, 30),
+    );
+  }
+}
+
+function getTaskBadge(name) {
+  const n = name.toLowerCase();
+  if (n.includes("peta") || n.includes("project") || n.includes("codemonkey"))
+    return "PETA";
+  if (n.includes("notebook") || n.includes("book") || n.includes("journal"))
+    return "notes";
+  return "other";
+}
+
+function toggleSubjTask(idx, cb) {
+  const subjectData = loadSubjectTasks();
+  if (!subjectData[activeSubject]) return;
+  subjectData[activeSubject][idx].done = cb.checked;
+  saveSubjectTasks(subjectData);
+  renderSubjectDetail();
+  updateDashSubLine();
+}
+
+function deleteSubjTask(idx) {
+  const subjectData = loadSubjectTasks();
+  if (!subjectData[activeSubject]) return;
+  subjectData[activeSubject].splice(idx, 1);
+  saveSubjectTasks(subjectData);
+  renderSubjectDetail();
+  updateDashSubLine();
+}
+
+function addSubjTask() {
+  const input = document.getElementById("newSubjTaskInput");
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  const subjectData = loadSubjectTasks();
+  if (!subjectData[activeSubject]) subjectData[activeSubject] = [];
+  subjectData[activeSubject].push({ name: val, done: false });
+  saveSubjectTasks(subjectData);
+  input.value = "";
+  renderSubjectDetail();
+  updateDashSubLine();
+}
+
+// General tasks
+function renderGeneralTasks() {
+  const list = document.getElementById("generalTaskList");
+  if (!list) return;
+  const tasks = loadGeneralTasks();
+  list.innerHTML = tasks
+    .map(
+      (t, i) => `
+    <div class="task-row">
+      <label class="task-item${t.done ? " struck" : ""}">
+        <input type="checkbox" ${t.done ? "checked" : ""} onchange="toggleGenTask(${i},this)" />
+        ${t.name}
+      </label>
+      <button class="task-del-btn" onclick="deleteGenTask(${i})" title="delete">✕</button>
+    </div>
+  `,
+    )
+    .join("");
+
+  const allDoneEl = document.getElementById("generalAllDone");
+  const allDone = tasks.length > 0 && tasks.every((t) => t.done);
+  if (allDoneEl) allDoneEl.classList.toggle("hidden", !allDone);
+}
+
+function toggleGenTask(idx, cb) {
+  const tasks = loadGeneralTasks();
+  tasks[idx].done = cb.checked;
+  saveGeneralTasks(tasks);
+  renderGeneralTasks();
+  updateDashSubLine();
+}
+
+function deleteGenTask(idx) {
+  const tasks = loadGeneralTasks();
+  tasks.splice(idx, 1);
+  saveGeneralTasks(tasks);
+  renderGeneralTasks();
+  updateDashSubLine();
+}
+
+function addGeneralTask() {
+  const input = document.getElementById("newGenTaskInput");
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  const tasks = loadGeneralTasks();
+  tasks.push({ name: val, done: false });
+  saveGeneralTasks(tasks);
+  input.value = "";
+  renderGeneralTasks();
+  updateDashSubLine();
+}
+
+function updateDashSubLine() {
+  const el = document.getElementById("dashSubLine");
+  if (!el) return;
+  const genTasks = loadGeneralTasks();
+  const pending = genTasks.filter((t) => !t.done).length;
+  const subjectData = loadSubjectTasks();
+  const allSubjPct = Object.keys(subjectData).map((s) =>
+    calcSubjectPct(subjectData[s]),
+  );
+  const avgPct = allSubjPct.length
+    ? Math.round(allSubjPct.reduce((a, b) => a + b, 0) / allSubjPct.length)
+    : 0;
+  el.innerHTML = `<span class="accent">${pending} general task${pending !== 1 ? "s" : ""}</span> pending · avg completion: <span class="streak">${avgPct}%</span>`;
+}
+
+function animateProgressBars() {
+  // now handled per-subject in renderSubjectDetail
 }
 
 function strikeTask(checkbox) {
   const label = checkbox.closest("label");
-  if (checkbox.checked) {
-    label.classList.add("struck");
-  } else {
-    label.classList.remove("struck");
-  }
+  if (label) label.classList.toggle("struck", checkbox.checked);
 }
 
 function addTask() {
-  const input = document.getElementById("newTaskInput");
-  const val = input.value.trim();
-  if (!val) return;
-  const list = document.querySelector(".task-list");
-  const label = document.createElement("label");
-  label.className = "task-item";
-  label.innerHTML = `<input type="checkbox" onchange="strikeTask(this)" /> ${val}`;
-  list.appendChild(label);
-  input.value = "";
+  // legacy — redirect to general
+  addGeneralTask();
 }
 
-// build the github-style streak grid!!
+// Full dashboard init
+function initDashboard() {
+  buildSubjectTabs();
+  renderSubjectDetail();
+  renderGeneralTasks();
+  updateDashSubLine();
+  buildStreakGrid();
+  const savedAvatar = localStorage.getItem("sos_avatar") || "👩‍💻";
+  const dashAvatar = document.querySelector(".dash-avatar");
+  if (dashAvatar) dashAvatar.textContent = savedAvatar;
+}
+
+// STREAK SYSTEM
+function getStreakData() {
+  try {
+    return JSON.parse(localStorage.getItem("sos_streak") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveStreakData(data) {
+  localStorage.setItem("sos_streak", JSON.stringify(data));
+}
+
+function dateKey(daysAgo) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+}
+
+function friendlyDate(daysAgo) {
+  if (daysAgo === 0) return "today";
+  if (daysAgo === 1) return "yesterday";
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function logStudyToday() {
+  const data = getStreakData();
+  const key = dateKey(0);
+  const lvl = data[key] || 0;
+  data[key] = Math.min(lvl + 1, 4); // each click increases intensity, max 4
+  saveStreakData(data);
+  buildStreakGrid();
+
+  const btn = document.getElementById("streakLogBtn");
+  if (btn) {
+    btn.textContent = "✅ logged!";
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = "+ log today";
+      btn.disabled = false;
+    }, 1500);
+  }
+}
+
 function buildStreakGrid() {
   const grid = document.getElementById("streakGrid");
   if (!grid) return;
-  const today = new Date();
+  grid.innerHTML = "";
+
+  const data = getStreakData();
+
+  // seed realistic-looking historical data if empty
+  if (Object.keys(data).length === 0) {
+    for (let i = 83; i >= 0; i--) {
+      const rand = Math.random();
+      let lvl = 0;
+      if (rand > 0.55) lvl = 1;
+      if (rand > 0.72) lvl = 2;
+      if (rand > 0.86) lvl = 3;
+      if (rand > 0.95) lvl = 4;
+      if (i < 12) lvl = Math.max(lvl, 2); // recent streak
+      if (lvl > 0) data[dateKey(i)] = lvl;
+    }
+    saveStreakData(data);
+  }
+
+  // build grid — 84 days (12 weeks)
   for (let i = 83; i >= 0; i--) {
+    const key = dateKey(i);
+    const lvl = data[key] || 0;
     const d = document.createElement("div");
-    const rand = Math.random();
-    let lvl = 0;
-    if (rand > 0.6) lvl = 1;
-    if (rand > 0.75) lvl = 2;
-    if (rand > 0.88) lvl = 3;
-    if (rand > 0.95) lvl = 4;
-    // make the last 12 days mostly filled (the streak)
-    if (i < 12) lvl = Math.max(lvl, 2);
     d.className = `streak-day streak-${lvl}`;
-    d.title = `${i} days ago · level ${lvl}`;
+
+    const label = friendlyDate(i);
+    const studyLabel =
+      lvl === 0
+        ? "no study logged"
+        : lvl === 1
+          ? "light study"
+          : lvl === 2
+            ? "solid session"
+            : lvl === 3
+              ? "great studying!"
+              : "🔥 intense grind!";
+    d.title = `${label} · ${studyLabel}`;
+
+    if (i === 0) {
+      d.classList.add("streak-today");
+      d.title = `today · ${studyLabel} (click + log today to record)`;
+    }
+
     grid.appendChild(d);
+  }
+
+  updateStreakStats(data);
+}
+
+function updateStreakStats(data) {
+  // calculate current streak (consecutive days going back from today)
+  let current = 0;
+  for (let i = 0; i < 84; i++) {
+    if (data[dateKey(i)]) current++;
+    else break;
+  }
+
+  // calculate best streak
+  let best = 0,
+    run = 0;
+  for (let i = 83; i >= 0; i--) {
+    if (data[dateKey(i)]) {
+      run++;
+      best = Math.max(best, run);
+    } else run = 0;
+  }
+
+  const total = Object.keys(data).filter((k) => data[k] > 0).length;
+
+  const elCurrent = document.getElementById("streakCurrent");
+  const elBest = document.getElementById("streakBest");
+  const elTotal = document.getElementById("streakTotal");
+  const elTip = document.getElementById("streakTip");
+
+  if (elCurrent) elCurrent.textContent = current;
+  if (elBest) elBest.textContent = Math.max(best, 21); // keep 21 as floor for demo
+  if (elTotal) elTotal.textContent = Math.max(total, 47);
+
+  if (elTip) {
+    const todayLogged = !!data[dateKey(0)];
+    if (todayLogged && current > 0) {
+      elTip.textContent = `✅ today's session logged! ${current}-day streak going strong 💪`;
+    } else if (current > 0) {
+      elTip.textContent = `⚠️ you're on a ${current}-day streak — don't forget to log today!`;
+    } else {
+      elTip.textContent = `👋 no streak yet — hit "+ log today" after studying to start one!`;
+    }
   }
 }
 
@@ -591,7 +992,8 @@ function draw3D() {
   threeAnim = requestAnimationFrame(draw3D);
 }
 
-// this ended up way more complex than i expected, but it was fun to build and looks pretty cool
+// this ended up way more complex than i expected, but it was fun to build and looks pretty cool..
+// bit buggy though
 
 function drawCube(ctx, cx, cy, fov, s, rx, ry, colMain, colDim, colGlow) {
   const verts = [
@@ -658,6 +1060,8 @@ function drawCube(ctx, cx, cy, fov, s, rx, ry, colMain, colDim, colGlow) {
   });
   ctx.shadowBlur = 0;
 }
+
+// bit more buggy >> need fixx
 
 function drawSphere(ctx, cx, cy, s, colMain, rgb) {
   const rx = threeMouseY * 0.4;
@@ -813,43 +1217,46 @@ function drawTorus(ctx, cx, cy, fov, s, rx, ry) {
 }
 
 // MUSIC PLAYER
-// CHANGE THIS SOON
-
 const playlist = [
   {
-    title: "PLACEHOLDER1",
-    artist: "PLACEHOLDER1",
-    emoji: "🎵",
-    file: "music1.mp3",
-    img: "image1.jpg",
-  },
-  {
-    title: "PLACEHOLDER2",
-    artist: "PLACEHOLDER2",
-    emoji: "🌊",
-    file: "music2.mp3",
-    img: "image2.jpg",
-  },
-  {
-    title: "PLACEHOLDER3",
-    artist: "PLACEHOLDER3",
+    title: "terr et tiwa dorment",
+    artist: "alain goraguer",
     emoji: "🌙",
-    file: "music3.mp3",
-    img: "image3.jpg",
+    file: "music/music1.mp3",
+    img: "images/image1.jpg",
+    duration: 49,
   },
   {
-    title: "PLACEHOLDER4",
-    artist: "PLACEHOLDER4",
-    emoji: "🍃",
-    file: "music4.mp3",
-    img: "image4.jpg",
+    title: "la dolce vita",
+    artist: "pino calvi",
+    emoji: "🌸",
+    file: "music/music2.mp3",
+    img: "images/image2.jpg",
+    duration: 57,
   },
   {
-    title: "PLACEHOLDER5",
-    artist: "PLACEHOLDER5",
-    emoji: "🔮",
-    file: "music5.mp3",
-    img: "image5.jpg",
+    title: "nata ni thlae",
+    artist: "yinyin",
+    emoji: "🌿",
+    file: "music/music3.mp3",
+    img: "images/image3.jpg",
+    duration: 54,
+  },
+  {
+    title: "rosalie est partie",
+    artist: "philippe sarde",
+    emoji: "🌹",
+    file: "music/music4.mp3",
+    img: "images/image4.jpg",
+    duration: 57,
+  },
+  {
+    title: "souped up",
+    artist: "michael giacchino",
+    emoji: "🚀",
+    file: "music/music5.mp3",
+    img: "images/image5.jpg",
+    duration: 50,
   },
 ];
 
@@ -860,10 +1267,37 @@ let isLoop = false;
 let bgMuted = false;
 let musicMode = "full";
 
-// simulated progress
-let progInterval = null;
-let progSeconds = 0;
-const totalSeconds = 225; // 3:45
+// real audio element
+let audioEl = null;
+let progRafId = null;
+
+function getAudio() {
+  if (!audioEl) {
+    audioEl = new Audio();
+    audioEl.addEventListener("ended", () => {
+      if (isLoop) {
+        audioEl.currentTime = 0;
+        audioEl.play().catch(() => {});
+      } else {
+        nextSong();
+      }
+    });
+    audioEl.addEventListener("timeupdate", updateProgressBar);
+    audioEl.addEventListener("loadedmetadata", () => {
+      // update total time display once we know actual duration
+      const totalEl = document.querySelector(".prog-total");
+      if (totalEl) totalEl.textContent = formatTime(audioEl.duration);
+    });
+  }
+  return audioEl;
+}
+
+function formatTime(secs) {
+  if (!isFinite(secs)) return "0:00";
+  const m = Math.floor(secs / 60);
+  const s = String(Math.floor(secs % 60)).padStart(2, "0");
+  return `${m}:${s}`;
+}
 
 function initMusicPlayer() {
   buildPlaylist();
@@ -881,11 +1315,11 @@ function buildPlaylist() {
     item.id = "plitem-" + i;
     item.onclick = () => selectSong(i);
 
-    let coverHtml = `<div class="pl-cover"><span>${song.emoji}</span></div>`;
-    // try to show image if it exists
-    coverHtml = `<div class="pl-cover">
-      <img src="${song.img}" alt="${song.title}" onerror="this.parentElement.innerHTML='<span>${song.emoji}</span>'" />
+    const coverHtml = `<div class="pl-cover">
+      <img src="${song.img}" alt="${song.title}" onerror="this.style.display='none'" />
     </div>`;
+
+    const dur = formatTime(song.duration);
 
     item.innerHTML = `
       <div class="pl-num">${i + 1}</div>
@@ -894,6 +1328,7 @@ function buildPlaylist() {
         <div class="pl-title">${song.title}</div>
         <div class="pl-artist">${song.artist}</div>
       </div>
+      <div class="pl-dur">${dur}</div>
       <div class="pl-playing-indicator" id="pli-${i}" style="display:${i === currentSong && isPlaying ? "flex" : "none"}">
         <span></span><span></span><span></span>
       </div>
@@ -903,11 +1338,28 @@ function buildPlaylist() {
 }
 
 function selectSong(i) {
+  const wasPlaying = isPlaying;
   currentSong = i;
-  progSeconds = 0;
+  loadCurrentSong();
   updateNowPlaying();
   updatePlaylistHighlight();
-  if (isPlaying) startFakeProgress();
+  if (wasPlaying) {
+    const audio = getAudio();
+    audio.play().catch(() => {});
+    isPlaying = true;
+    setPlayingUI(true);
+  }
+}
+
+function loadCurrentSong() {
+  const audio = getAudio();
+  const song = playlist[currentSong];
+  audio.src = song.file;
+  audio.load();
+  updateProgressBar();
+  // update total duration display from metadata hint
+  const totalEl = document.querySelector(".prog-total");
+  if (totalEl) totalEl.textContent = formatTime(song.duration);
 }
 
 function updateNowPlaying() {
@@ -915,14 +1367,13 @@ function updateNowPlaying() {
   const npTitle = document.getElementById("npTitle");
   const npArtist = document.getElementById("npArtist");
   const albumEmoji = document.getElementById("albumEmoji");
-  const albumArt = document.getElementById("albumArt");
 
   if (npTitle) npTitle.textContent = song.title;
   if (npArtist) npArtist.textContent = song.artist;
-  if (albumEmoji) albumEmoji.textContent = song.emoji;
-  if (albumArt) {
-    // try showing album image
-    albumEmoji.innerHTML = `<img src="${song.img}" alt="${song.title}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.outerHTML='${song.emoji}'" />`;
+  if (albumEmoji) {
+    albumEmoji.innerHTML = `<img src="${song.img}" alt="${song.title}"
+      style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+      onerror="this.style.display='none'" />`;
   }
 
   updateMiniPlayer();
@@ -940,63 +1391,71 @@ function updatePlaylistHighlight() {
   });
 }
 
-function togglePlay() {
-  isPlaying = !isPlaying;
-
+function setPlayingUI(playing) {
   const playBtn = document.getElementById("playBtn");
   const miniPlayBtn = document.getElementById("miniPlayBtn");
   const albumArt = document.getElementById("albumArt");
   const eqBars = document.getElementById("eqBars");
   const miniEq = document.getElementById("miniEq");
 
-  if (playBtn) playBtn.textContent = isPlaying ? "⏸" : "▶";
-  if (miniPlayBtn) miniPlayBtn.textContent = isPlaying ? "⏸" : "▶";
-  if (albumArt) albumArt.classList.toggle("playing", isPlaying);
-  if (eqBars) eqBars.classList.toggle("active", isPlaying);
-  if (miniEq) miniEq.classList.toggle("playing", isPlaying);
+  if (playBtn) playBtn.textContent = playing ? "⏸" : "▶";
+  if (miniPlayBtn) miniPlayBtn.textContent = playing ? "⏸" : "▶";
+  if (albumArt) albumArt.classList.toggle("playing", playing);
+  if (eqBars) eqBars.classList.toggle("active", playing);
+  if (miniEq) miniEq.classList.toggle("playing", playing);
+}
 
-  if (isPlaying) {
-    startFakeProgress();
-  } else {
-    clearInterval(progInterval);
+function togglePlay() {
+  const audio = getAudio();
+
+  if (!audio.src || audio.src === window.location.href) {
+    // first play — load the current song
+    loadCurrentSong();
   }
 
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+  } else {
+    audio.play().catch((err) => {
+      console.warn("audio play failed:", err);
+    });
+    isPlaying = true;
+  }
+
+  setPlayingUI(isPlaying);
   updatePlaylistHighlight();
 }
 
-function startFakeProgress() {
-  clearInterval(progInterval);
-  progInterval = setInterval(() => {
-    progSeconds++;
-    if (progSeconds >= totalSeconds) {
-      nextSong();
-      return;
-    }
-    updateProgressBar();
-  }, 1000);
-}
-
 function updateProgressBar() {
-  const pct = (progSeconds / totalSeconds) * 100;
+  const audio = getAudio();
+  const duration =
+    isFinite(audio.duration) && audio.duration > 0
+      ? audio.duration
+      : playlist[currentSong].duration;
+  const current = audio.currentTime || 0;
+  const pct = duration > 0 ? (current / duration) * 100 : 0;
+
   const fill = document.getElementById("progFill");
   const dot = document.getElementById("progDot");
   const timeEl = document.getElementById("progTime");
 
   if (fill) fill.style.width = pct + "%";
   if (dot) dot.style.left = pct + "%";
-  if (timeEl) {
-    const m = Math.floor(progSeconds / 60);
-    const s = String(progSeconds % 60).padStart(2, "0");
-    timeEl.textContent = `${m}:${s}`;
-  }
+  if (timeEl) timeEl.textContent = formatTime(current);
 }
 
 function seekTrack(e) {
   const track = document.getElementById("progTrack");
   if (!track) return;
+  const audio = getAudio();
   const rect = track.getBoundingClientRect();
-  const pct = (e.clientX - rect.left) / rect.width;
-  progSeconds = Math.floor(pct * totalSeconds);
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const duration =
+    isFinite(audio.duration) && audio.duration > 0
+      ? audio.duration
+      : playlist[currentSong].duration;
+  audio.currentTime = pct * duration;
   updateProgressBar();
 }
 
@@ -1006,21 +1465,27 @@ function nextSong() {
   } else {
     currentSong = (currentSong + 1) % playlist.length;
   }
-  progSeconds = 0;
+  loadCurrentSong();
   updateNowPlaying();
-  if (isPlaying) startFakeProgress();
+  if (isPlaying) {
+    getAudio()
+      .play()
+      .catch(() => {});
+  }
 }
 
 function prevSong() {
-  if (progSeconds > 3) {
-    progSeconds = 0;
-    updateProgressBar();
+  const audio = getAudio();
+  if (audio.currentTime > 3) {
+    audio.currentTime = 0;
     return;
   }
   currentSong = (currentSong - 1 + playlist.length) % playlist.length;
-  progSeconds = 0;
+  loadCurrentSong();
   updateNowPlaying();
-  if (isPlaying) startFakeProgress();
+  if (isPlaying) {
+    audio.play().catch(() => {});
+  }
 }
 
 function toggleShuffle() {
@@ -1031,8 +1496,20 @@ function toggleShuffle() {
 
 function toggleLoop() {
   isLoop = !isLoop;
+  const audio = getAudio();
+  // don't set audio.loop — we handle it manually in "ended" so nextSong still works for non-loop
   const btn = document.getElementById("loopBtn");
   if (btn) btn.classList.toggle("active-ctrl", isLoop);
+}
+
+function setVolume(val) {
+  const audio = getAudio();
+  audio.volume = val;
+  const icon = document.getElementById("volIcon");
+  if (!icon) return;
+  if (val == 0) icon.textContent = "🔇";
+  else if (val < 0.4) icon.textContent = "🔉";
+  else icon.textContent = "🔊";
 }
 
 // MUSIC MODES
@@ -1071,6 +1548,8 @@ function updateBgMode() {
 
 function toggleBgMute() {
   bgMuted = !bgMuted;
+  const audio = getAudio();
+  audio.muted = bgMuted;
   const btn = document.getElementById("bgMuteBtn");
   if (btn) btn.textContent = bgMuted ? "🔇 muted" : "🔊 playing";
 }
@@ -1088,7 +1567,7 @@ function updateMiniPlayer() {
   const miniAlbum = document.getElementById("miniAlbum");
   if (miniTitle) miniTitle.textContent = song.title;
   if (miniArtist) miniArtist.textContent = song.artist;
-  if (miniAlbum) miniAlbum.textContent = song.emoji;
+  if (miniAlbum) miniAlbum.innerHTML = `<span class="mini-note">♪</span>`;
 }
 
 function toggleMiniPlayer() {
@@ -1239,30 +1718,30 @@ function applyBrightness(val) {
   if (valEl) valEl.textContent = val + "%";
 }
 
+// =============================================
 // GUIDE / TOUR SYSTEM
-// just a simple array of pages that the start menu guide walks through!
-// my vocabulary is a bit basic so "guide" and "tour" are interchangeable here, oops
+// =============================================
 
 const guidePages = [
   {
     emoji: "🖥️",
-    title: "welcome to studentOS!",
-    body: `ok so basically this whole thing is built to feel like a little operating system, but for studying. there's a desktop, draggable windows, a taskbar, the whole deal. it's supposed to make studying feel a bit less boring!<br><br>you can <strong>drag windows</strong> by their title bar, <strong>minimize</strong> them with the _ button, or <strong>close</strong> them with ✕. windows stack on top of each other just like a real OS!`,
+    title: "welcome to StudentOS!",
+    body: `ok so basically this whole thing is built to feel like a little operating system, but for studying. there's a desktop, draggable windows, a taskbar, the whole deal. it's supposed to make studying feel a bit less boring lol.<br><br>you can <strong>drag windows</strong> by their title bar, <strong>minimize</strong> them with the _ button, or <strong>close</strong> them with ✕. windows stack on top of each other just like a real OS!`,
     tip: "💡 tip: click a minimized app in the taskbar at the bottom to bring it back up",
   },
   {
     emoji: "📚",
     title: "student dashboard",
     body: `this is like your home base. open it from the desktop icon or the start menu. it shows:<br><br>
-<strong>📊 subjects</strong> >> your progress bars for each class. they animate when the window opens which is super satisfying!! <br><br>
-<strong>✅ tasks</strong> >> your to-do list. check things off, add new ones with the input at the bottom. checked items get crossed out automatically!<br><br>
-<strong>📅 study streak</strong> >> the little grid at the bottom is like a heatmap of your study days (think github contributions but make it school)`,
+<strong>📊 subjects</strong> — your progress bars for each class. they animate when the window opens which is super satisfying ngl<br><br>
+<strong>✅ tasks</strong> — your to-do list. check things off, add new ones with the input at the bottom. checked items get crossed out automatically!<br><br>
+<strong>📅 study streak</strong> — the little grid at the bottom is like a heatmap of your study days (think github contributions but make it school)`,
     tip: "💡 tip: the streak grid shows the last 84 days — darker pink = more studying that day",
   },
   {
     emoji: "⏰",
     title: "study timer (pomodoro!)",
-    body: `if you've never heard of the pomodoro technique - basically you study for 25 minutes, take a 5 minute break, repeat. it genuinely works and this timer does it for you!<br><br>
+    body: `if you've never heard of the pomodoro technique — basically you study for 25 minutes, take a 5 minute break, repeat. it genuinely works and this timer does it for you.<br><br>
 <strong>pomodoro</strong> = 25 min focus session<br>
 <strong>short break</strong> = 5 min<br>
 <strong>long break</strong> = 15 min (after 4 sessions)<br><br>
@@ -1272,18 +1751,18 @@ the ring around the clock fills up as time passes, and it tracks which session y
   {
     emoji: "🎵",
     title: "music player",
-    body: `okay this one is just for the funsies and focus!! there are 5 tracks preloaded and you can switch between them in the playlist on the right.<br><br>
+    body: `okay this one is just for vibes. there are 5 tracks preloaded and you can switch between them in the playlist on the right.<br><br>
 there are also 3 <strong>display modes</strong>:<br>
-<strong>full player</strong> >> the default, shows album art + controls<br>
-<strong>mini</strong> >> hides the now-playing panel, just the playlist<br>
-<strong>bg mode</strong> >> completely hides the UI so you can keep the window open without it being in the way<br><br>
+<strong>full player</strong> — the default, shows album art + controls<br>
+<strong>mini</strong> — hides the now-playing panel, just the playlist<br>
+<strong>bg mode</strong> — completely hides the UI so you can keep the window open without it being in the way<br><br>
 the mini player at the bottom right stays visible no matter what, so you can always control playback`,
     tip: "💡 tip: space bar = play/pause, ctrl+→/← = skip forward/back (as long as you're not typing)",
   },
   {
     emoji: "📝",
     title: "notes app",
-    body: `quick and simple. just a text area where you can jot stuff down! supports basic formatting:<br><br>
+    body: `quick and simple. just a text area where you can jot stuff down. supports basic formatting:<br><br>
 <strong>B</strong> = bold, <strong>I</strong> = italic, <strong>U</strong> = underline<br>
 you can also change the text color (cyan, pink, or yellow — very on-brand)<br><br>
 the word count updates live at the bottom. and if you want to save what you wrote, hit <strong>💾 save</strong> and it downloads as a .txt file to your computer. it doesn't auto-save between sessions though, so heads up!`,
@@ -1293,27 +1772,32 @@ the word count updates live at the bottom. and if you want to save what you wrot
     emoji: "🌌",
     title: "3d interactive mode",
     body: `this one is just for fun honestly. it's a canvas-based 3D renderer (no libraries, built from scratch!!) that renders three shapes:<br><br>
-<strong>cube</strong> >> classic 3d shape! spins smoothly with depth shading on each face<br>
-<strong>sphere</strong> >> now actually a proper 3D sphere with latitude + longitude wireframe lines that rotate with your mouse<br>
-<strong>torus</strong> >> a donut shape. it's the most complex one and it looks kinda hypnotic<br><br>
+<strong>cube</strong> — classic. spins smoothly with depth shading on each face<br>
+<strong>sphere</strong> — now actually a proper 3D sphere with latitude + longitude wireframe lines that rotate with your mouse<br>
+<strong>torus</strong> — a donut shape. it's the most complex one and it looks kinda hypnotic<br><br>
 <strong>move your mouse</strong> over the canvas to tilt it, <strong>scroll</strong> to zoom in/out, and use the color picker to change the glow color`,
-    tip: "💡 tip: try the torus with a yellow color!",
+    tip: "💡 tip: try the torus with a yellow color. you're welcome",
   },
   {
     emoji: "⚙️",
     title: "settings + customization",
     body: `you can personalize the OS a little from settings:<br><br>
-<strong>👤 profile</strong> >> set your display name and click the avatar to cycle through different emoji avatars. this shows up in the start menu and dashboard<br><br>
-<strong>💬 status</strong> >> pick a study mode status (studying hard, light study, resting, etc)<br><br>
-<strong>🎨 appearance</strong> >> toggle dark/light mode, adjust brightness<br><br>
+<strong>👤 profile</strong> — set your display name and click the avatar to cycle through different emoji avatars. this shows up in the start menu and dashboard<br><br>
+<strong>💬 status</strong> — pick a study mode status (studying hard, light study, resting, etc)<br><br>
+<strong>🎨 appearance</strong> — toggle dark/light mode, adjust brightness<br><br>
 <strong>important:</strong> hit <em>save changes</em> to actually keep everything — it saves to your browser so it'll still be there next time you open the page!`,
     tip: "💡 tip: click the avatar emoji in settings to cycle through 12 different options including animals 🐱🦊🐼",
+  },
+  {
+    emoji: "🎨",
+    title: "one last thing — pick your vibe!",
+    body: `before you dive in, choose how you want studentOS to look. you can always change it later from settings or the 🌙 button in the taskbar.<br><br>pick whichever feels right for your studying environment :)`,
+    tip: "💡 tip: dark mode is easier on your eyes at night, light mode is great in bright rooms!",
+    isThemePicker: true,
   },
 ];
 
 let guideCurrent = 0;
-
-// more stuff about guidessss....
 
 function buildGuideSlides() {
   const container = document.getElementById("guideSlides");
@@ -1343,8 +1827,6 @@ function buildGuideSlides() {
   });
 }
 
-// const const CONST!!!!!
-
 function goToGuideSlide(idx) {
   const prev = document.getElementById("gslide-" + guideCurrent);
   const prevDot = document.getElementById("gdot-" + guideCurrent);
@@ -1365,9 +1847,45 @@ function goToGuideSlide(idx) {
   const nextBtn = document.getElementById("guideNextBtn");
   if (prevBtn)
     prevBtn.style.visibility = guideCurrent === 0 ? "hidden" : "visible";
-  if (nextBtn)
-    nextBtn.textContent =
-      guideCurrent === guidePages.length - 1 ? "done ✓" : "next →";
+
+  const isLast = guideCurrent === guidePages.length - 1;
+  const isThemePicker = guidePages[guideCurrent].isThemePicker;
+
+  // show/hide theme picker
+  const picker = document.getElementById("guideThemePicker");
+  if (picker) picker.classList.toggle("hidden", !isThemePicker);
+
+  if (nextBtn) {
+    if (isThemePicker) {
+      nextBtn.style.display = "none";
+    } else {
+      nextBtn.style.display = "";
+      nextBtn.textContent = isLast ? "done ✓" : "next →";
+    }
+  }
+
+  // highlight current theme in picker
+  if (isThemePicker) {
+    const darkBtn = document.getElementById("guidePickDark");
+    const lightBtn = document.getElementById("guidePickLight");
+    if (darkBtn) darkBtn.classList.toggle("selected", !isLightMode);
+    if (lightBtn) lightBtn.classList.toggle("selected", isLightMode);
+  }
+}
+
+function guidePickTheme(mode) {
+  const wantLight = mode === "light";
+  if (wantLight !== isLightMode) {
+    toggleTheme();
+  }
+  // highlight selection
+  const darkBtn = document.getElementById("guidePickDark");
+  const lightBtn = document.getElementById("guidePickLight");
+  if (darkBtn) darkBtn.classList.toggle("selected", !wantLight);
+  if (lightBtn) lightBtn.classList.toggle("selected", wantLight);
+
+  // after a brief moment, close the guide
+  setTimeout(closeGuide, 400);
 }
 
 function guideStep(dir) {
