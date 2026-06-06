@@ -1,9 +1,8 @@
-/* studentos v2.0 — style.css */
+/* studentos v2.0 */
 /* picking the colors were so hard, i went through like 50 different palettes before settling on this one
-had to make sure it looked good in both light and dark mode, which was a whole other challenge. 
+had to make sure it looked good in both light and dark mode, which was a whole other challenge.
 but i'm really happy with how it turned out!! */
 
-/* THEME VARIABLES */
 :root {
   /* dark mode*/
   --bg:           #120810;
@@ -57,7 +56,7 @@ body.light-mode {
   --gold:    #d97706;
   --softred: #f43f5e;
 
-  /* its 10pm and i spent 1 hour looking for a missing semicolon cause the colors weren't loading🙃 */
+  /* i spent 1 hour looking for a missing semicolon cause the colors weren't loading🙃 */
 
   --text:     #3d0a26;
   --text-dim: #c084a8;
@@ -404,11 +403,71 @@ body.light-mode .add-task input { background: rgba(0,0,0,0.03); border-color: rg
 }
 .add-task button:hover { opacity: 0.82; }
 
-/* streak heatmap */
-.streak-stats {
-  display: flex; gap: 14px; align-items: center;
-  margin-bottom: 10px; flex-wrap: wrap;
+/* streak section.. spent a while getting this to match the card vibe just right */
+
+/* header row: title + log button side by side */
+.streak-header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
 }
+
+/* the + log today button, same energy as the add-task button but more polished */
+.streak-log-btn {
+  font-family: var(--font-main); font-size: 9px; letter-spacing: 0.5px;
+  background: rgba(255,61,154,0.08);
+  border: 1px solid rgba(255,61,154,0.3);
+  color: var(--pink2); border-radius: 3px;
+  padding: 4px 10px; cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+.streak-log-btn:hover { background: var(--pink); border-color: var(--pink); color: #fff; }
+.streak-log-btn:disabled { opacity: 0.4; cursor: default; }
+body.light-mode .streak-log-btn { background: rgba(233,30,140,0.05); }
+
+/* the little "how it works" hint, kept it tiny so it doesn't hog space */
+.streak-explain {
+  font-size: 9px; color: var(--text-dim);
+  line-height: 1.55; margin-bottom: 10px; letter-spacing: 0.2px;
+}
+.streak-explain strong { color: var(--pink3); font-weight: normal; }
+
+/* stat row! 3 mini cards, same feel as subject/task cards */
+.streak-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 6px; margin-bottom: 10px;
+}
+.streak-stat-box {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 5px; padding: 7px 10px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.streak-stat-num {
+  font-family: var(--font-display); font-size: 16px;
+  color: var(--pink); letter-spacing: 1px; line-height: 1;
+}
+.streak-stat-label {
+  font-size: 8px; color: var(--text-dim);
+  letter-spacing: 0.5px; line-height: 1.2;
+}
+
+/* grid wrapper keeps the month labels aligned */
+.streak-grid-wrap { overflow-x: auto; padding-bottom: 2px; }
+.streak-month-labels {
+  display: flex; gap: 4px; margin-bottom: 3px;
+  font-size: 8px; color: var(--text-dim); letter-spacing: 0.5px;
+  padding-left: 1px;
+}
+
+/* tip at the bottom */
+.streak-tip {
+  margin-top: 8px; padding: 6px 10px;
+  background: rgba(255,61,154,0.05);
+  border-left: 2px solid rgba(255,61,154,0.35);
+  border-radius: 0 4px 4px 0;
+  font-size: 9px; color: var(--text-dim); line-height: 1.5;
+}
+
 .streak-count { font-size: 12px; color: var(--gold); }
 .streak-count strong { font-style: normal; font-size: 14px; }
 .streak-best, .streak-total { font-size: 10px; color: var(--text-dim); }
@@ -485,7 +544,7 @@ body.light-mode .mode-btn { border-color: rgba(0,0,0,0.1); }
 }
 .music-layout { display: flex; flex: 1; overflow: hidden; }
 
-/* now playing — the album art spins and i am SO proud of that */
+/* now playing. the album art spins and i am SO proud of that */
 .now-playing {
   width: 260px; flex-shrink: 0; padding: 16px;
   display: flex; flex-direction: column; align-items: center;
@@ -494,19 +553,31 @@ body.light-mode .mode-btn { border-color: rgba(0,0,0,0.1); }
 .album-art {
   width: 130px; height: 130px; position: relative;
   display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 .album-placeholder {
-  font-size: 60px; z-index: 2; transition: transform 0.5s;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 60px; z-index: 2;
   animation: albumSpin 8s linear infinite paused;
+}
+.album-placeholder img {
+  width: 100%; height: 100%;
+  object-fit: cover; border-radius: 50%;
+  display: block;
 }
 .album-art.playing .album-placeholder { animation-play-state: running; }
 @keyframes albumSpin { to { transform: rotate(360deg); } }
 .album-spin-ring {
-  position: absolute; inset: 0; border-radius: 50%;
+  position: absolute; inset: -4px; border-radius: 50%;
   border: 2px solid transparent;
   border-top-color: var(--pink);
   border-right-color: rgba(255,61,154,0.3);
   animation: spinRing 2s linear infinite paused;
+  pointer-events: none; z-index: 3;
 }
 .album-art.playing .album-spin-ring { animation-play-state: running; }
 @keyframes spinRing { to { transform: rotate(360deg); } }
@@ -551,7 +622,7 @@ body.light-mode .prog-track { background: rgba(0,0,0,0.09); }
 }
 .play-big:hover { box-shadow: 0 0 22px rgba(255,61,154,0.65) !important; }
 
-/* eq bars — these are purely decorative but they make it look alive */
+/* eq bars. these are purely decorative but they make it look alive */
 .eq-bars { display: flex; align-items: flex-end; gap: 2px; height: 18px; opacity: 0; transition: opacity 0.3s; }
 .eq-bars.active { opacity: 1; }
 .eq-bars span {
@@ -569,6 +640,21 @@ body.light-mode .prog-track { background: rgba(0,0,0,0.09); }
 @keyframes eqBounce {
   from { height: 2px; }
   to   { height: 16px; box-shadow: 0 0 4px var(--pink); }
+}
+
+.np-volume {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+}
+.vol-icon { font-size: 13px; cursor: pointer; flex-shrink: 0; }
+#volSlider {
+  flex: 1; accent-color: var(--pink); cursor: pointer;
+  height: 3px; border-radius: 2px;
+}
+
+/* playlist duration label */
+.pl-dur {
+  font-size: 9px; color: var(--text-dim);
+  white-space: nowrap; flex-shrink: 0; margin-right: 4px;
 }
 
 /* playlist */
@@ -707,7 +793,16 @@ body.light-mode .timer-controls button:hover { box-shadow: none; }
   box-shadow: 0 4px 22px rgba(0,0,0,0.45); transition: transform 0.3s;
 }
 #miniPlayer.hidden { display: none; }
-.mini-album { font-size: 20px; flex-shrink: 0; }
+.mini-album {
+  width: 28px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,61,154,0.12);
+  border: 1px solid rgba(255,61,154,0.25);
+  border-radius: 6px;
+}
+.mini-note {
+  font-size: 14px; color: var(--pink); line-height: 1;
+}
 .mini-info { flex: 1; min-width: 0; }
 .mini-title { font-size: 10px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-artist { font-size: 9px; color: var(--text-dim); }
@@ -830,9 +925,7 @@ body.light-mode .toggle-pill::after { left: 16px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,61,154,0.2); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,61,154,0.45); }
 
-/* =============================================
-   GUIDE / TOUR SYSTEM
-   ============================================= */
+/* GUIDE / TOUR SYSTEM */
 
 /* shared button styles */
 .guide-btn {
@@ -961,6 +1054,7 @@ body.light-mode .guide-dot { background: rgba(0,0,0,0.12); }
   align-items: center; gap: 14px;
   box-shadow: 0 24px 80px rgba(0,0,0,0.65);
   animation: guideSlideUp 0.3s ease-out;
+/* reached 1k lines.. */
 }
 .welcome-emoji { font-size: 52px; line-height: 1; animation: waveBounce 1.2s ease infinite; }
 @keyframes waveBounce {
@@ -977,3 +1071,183 @@ body.light-mode .guide-dot { background: rgba(0,0,0,0.12); }
 }
 .welcome-btns { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 4px; }
 .welcome-btns .guide-btn { width: 100%; text-align: center; padding: 10px; }
+/*
+   DASHBOARD v3 — subjects + tasks
+   */
+
+.dash-body {
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  height: 100%; overflow: hidden;
+}
+
+.dash-main-cols {
+  display: flex; gap: 12px;
+  flex: 1; min-height: 0; overflow: hidden;
+}
+
+/* Left column: subjects */
+.dash-col-subjects {
+  display: flex; flex-direction: column; gap: 8px;
+  width: 280px; flex-shrink: 0;
+}
+
+/* Subject tab pills */
+.subj-tabs {
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+.subj-tab-btn {
+  background: var(--glass);
+  border: 1px solid var(--sc, var(--pink));
+  color: var(--text-dim);
+  font-family: var(--font-main); font-size: 9.5px;
+  padding: 4px 9px; border-radius: 20px; cursor: pointer;
+  transition: all 0.18s;
+}
+.subj-tab-btn:hover { color: var(--sc, var(--pink)); background: rgba(255,255,255,0.06); }
+.subj-tab-btn.active {
+  background: color-mix(in srgb, var(--sc, var(--pink)) 15%, transparent);
+  color: var(--sc, var(--pink));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--sc, var(--pink)) 40%, transparent);
+}
+
+/* Subject detail panel */
+.subj-detail {
+  flex: 1; min-height: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  overflow: hidden;
+}
+.subj-detail-header {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.subj-detail-name {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.subj-detail-pct {
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+}
+.subj-prog-bar { margin: 0; height: 5px; border-radius: 4px; }
+
+.subj-task-list {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.subj-task-list::-webkit-scrollbar { width: 3px; }
+.subj-task-list::-webkit-scrollbar-thumb { background: var(--pink4); border-radius: 2px; }
+
+/* Task row (with delete btn) */
+.task-row {
+  display: flex; align-items: center; gap: 4px;
+}
+.task-row .task-item { flex: 1; margin: 0; }
+.task-del-btn {
+  background: none; border: none;
+  color: var(--text-dim); font-size: 9px;
+  cursor: pointer; padding: 2px 4px; border-radius: 4px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.task-row:hover .task-del-btn { opacity: 1; }
+.task-del-btn:hover { color: #ff6b8a; }
+
+/* task type badge */
+.task-type-badge {
+  font-size: 8px; padding: 1px 5px; border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-dim);
+  margin-left: 4px; vertical-align: middle;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* subject add task row */
+.subj-add-task {
+  margin-top: auto; padding-top: 6px;
+  border-top: 1px solid var(--card-border);
+}
+.subj-add-task input { font-size: 10px; }
+
+/* Right column */
+.dash-col-right {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.general-tasks-card {
+  flex: 0 0 auto;
+}
+.general-tasks-card .task-list {
+  max-height: 110px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 2px 0;
+}
+.general-tasks-card .task-list::-webkit-scrollbar { width: 3px; }
+.general-tasks-card .task-list::-webkit-scrollbar-thumb { background: var(--pink4); border-radius: 2px; }
+
+.tasks-all-done {
+  font-size: 11px; color: var(--pink2);
+  text-align: center; padding: 6px 0;
+  animation: pulseFade 1.5s ease infinite;
+}
+.tasks-all-done.hidden { display: none; }
+@keyframes pulseFade {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* streak mini card */
+.streak-mini-card {
+  flex: 1; min-height: 0;
+}
+.streak-mini-card .streak-stats {
+  margin: 6px 0;
+}
+.streak-mini-card .streak-grid-wrap {
+  overflow: hidden;
+}
+.streak-mini-card .streak-grid {
+  gap: 2px;
+}
+
+/* dash-col base */
+.dash-col {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* GUIDE THEME PICKER */
+.guide-theme-picker {
+  display: flex; gap: 10px;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
+.guide-theme-picker.hidden { display: none; }
+.guide-theme-opt {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--glass);
+  border: 2px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px 22px; cursor: pointer;
+  transition: all 0.2s; min-width: 120px;
+  font-family: var(--font-main);
+}
+.guide-theme-opt:hover {
+  border-color: var(--pink);
+  background: rgba(255,61,154,0.08);
+  transform: translateY(-2px);
+}
+.guide-theme-opt.selected {
+  border-color: var(--pink);
+  background: rgba(255,61,154,0.15);
+  box-shadow: 0 0 16px rgba(255,61,154,0.3);
+}
+.gtp-icon { font-size: 28px; line-height: 1; }
+.gtp-label {
+  font-family: var(--font-display); font-size: 10px;
+  color: var(--pink); letter-spacing: 0.5px;
+}
+.gtp-desc { font-size: 9.5px; color: var(--text-dim); text-align: center; }
