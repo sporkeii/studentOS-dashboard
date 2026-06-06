@@ -253,9 +253,7 @@ document.addEventListener("mouseup", () => {
   dragging = null;
 });
 
-// =============================================
 // DASHBOARD — SUBJECTS + TASKS SYSTEM
-// =============================================
 
 const SUBJECT_COLORS = {
   Mathematics: "#00ffcc",
@@ -1718,44 +1716,42 @@ function applyBrightness(val) {
   if (valEl) valEl.textContent = val + "%";
 }
 
-// =============================================
 // GUIDE / TOUR SYSTEM
-// =============================================
 
 const guidePages = [
   {
     emoji: "🖥️",
     title: "welcome to StudentOS!",
-    body: `ok so basically this whole thing is built to feel like a little operating system, but for studying. there's a desktop, draggable windows, a taskbar, the whole deal. it's supposed to make studying feel a bit less boring lol.<br><br>you can <strong>drag windows</strong> by their title bar, <strong>minimize</strong> them with the _ button, or <strong>close</strong> them with ✕. windows stack on top of each other just like a real OS!`,
+    body: `this whole thing is built to feel like a little operating system, but for studying. there's a desktop, draggable windows, a taskbar, a student dashboard. it's supposed to make studying feel a bit less boring.<br><br>you can <strong>drag windows</strong> by their title bar, <strong>minimize</strong> them with the _ button, or <strong>close</strong> them with ✕. windows stack on top of each other just like a real OS!`,
     tip: "💡 tip: click a minimized app in the taskbar at the bottom to bring it back up",
   },
   {
     emoji: "📚",
     title: "student dashboard",
     body: `this is like your home base. open it from the desktop icon or the start menu. it shows:<br><br>
-<strong>📊 subjects</strong> — your progress bars for each class. they animate when the window opens which is super satisfying ngl<br><br>
-<strong>✅ tasks</strong> — your to-do list. check things off, add new ones with the input at the bottom. checked items get crossed out automatically!<br><br>
-<strong>📅 study streak</strong> — the little grid at the bottom is like a heatmap of your study days (think github contributions but make it school)`,
-    tip: "💡 tip: the streak grid shows the last 84 days — darker pink = more studying that day",
+<strong>📊 subjects</strong> >> your progress bars for each class. they animate when the window opens which is super satisfying ngl<br><br>
+<strong>✅ tasks</strong> >>  to-do list. check things off, add new ones with the input at the bottom. checked items get crossed out automatically!<br><br>
+<strong>📅 study streak</strong> >> the little grid at the bottom is like a heatmap of your study days (think github contributions but make it school)`,
+    tip: "💡 tip: darker pink/neon pink  = more studying that day.",
   },
   {
     emoji: "⏰",
     title: "study timer (pomodoro!)",
-    body: `if you've never heard of the pomodoro technique — basically you study for 25 minutes, take a 5 minute break, repeat. it genuinely works and this timer does it for you.<br><br>
+    body: `if you've never heard of the pomodoro technique - basically you study for 25 minutes, take a 5 minute break, repeat. it works and this timer does it for you!<br><br>
 <strong>pomodoro</strong> = 25 min focus session<br>
 <strong>short break</strong> = 5 min<br>
 <strong>long break</strong> = 15 min (after 4 sessions)<br><br>
 the ring around the clock fills up as time passes, and it tracks which session you're on (1 through 4). after 4 pomodoros you've earned a long break!!`,
-    tip: "💡 tip: the ring color changes depending on the mode — blue for focus, teal for short break, purple for long",
+    tip: "💡 tip: the ring color changes depending on the mode.  blue for focus, teal for short break, purple for long",
   },
   {
     emoji: "🎵",
     title: "music player",
-    body: `okay this one is just for vibes. there are 5 tracks preloaded and you can switch between them in the playlist on the right.<br><br>
+    body: `this one is for more focus (i focus more with music playing in the background)! there are 5 tracks preloaded and you can switch between them in the playlist on the right.<br><br>
 there are also 3 <strong>display modes</strong>:<br>
-<strong>full player</strong> — the default, shows album art + controls<br>
-<strong>mini</strong> — hides the now-playing panel, just the playlist<br>
-<strong>bg mode</strong> — completely hides the UI so you can keep the window open without it being in the way<br><br>
+<strong>full player</strong> >> the default, shows album art + controls<br>
+<strong>mini</strong> >> hides the now-playing panel, just the playlist<br>
+<strong>bg mode</strong> >> completely hides the UI so you can keep the window open without it being in the way<br><br>
 the mini player at the bottom right stays visible no matter what, so you can always control playback`,
     tip: "💡 tip: space bar = play/pause, ctrl+→/← = skip forward/back (as long as you're not typing)",
   },
@@ -1772,9 +1768,9 @@ the word count updates live at the bottom. and if you want to save what you wrot
     emoji: "🌌",
     title: "3d interactive mode",
     body: `this one is just for fun honestly. it's a canvas-based 3D renderer (no libraries, built from scratch!!) that renders three shapes:<br><br>
-<strong>cube</strong> — classic. spins smoothly with depth shading on each face<br>
-<strong>sphere</strong> — now actually a proper 3D sphere with latitude + longitude wireframe lines that rotate with your mouse<br>
-<strong>torus</strong> — a donut shape. it's the most complex one and it looks kinda hypnotic<br><br>
+<strong>cube</strong> >> classic. spins smoothly with depth shading on each face<br>
+<strong>sphere</strong> >> now actually a proper 3D sphere with latitude + longitude wireframe lines that rotate with your mouse<br>
+<strong>torus</strong> >> a donut shape. it's the most complex one and it looks kinda hypnotic<br><br>
 <strong>move your mouse</strong> over the canvas to tilt it, <strong>scroll</strong> to zoom in/out, and use the color picker to change the glow color`,
     tip: "💡 tip: try the torus with a yellow color. you're welcome",
   },
@@ -1782,17 +1778,17 @@ the word count updates live at the bottom. and if you want to save what you wrot
     emoji: "⚙️",
     title: "settings + customization",
     body: `you can personalize the OS a little from settings:<br><br>
-<strong>👤 profile</strong> — set your display name and click the avatar to cycle through different emoji avatars. this shows up in the start menu and dashboard<br><br>
-<strong>💬 status</strong> — pick a study mode status (studying hard, light study, resting, etc)<br><br>
-<strong>🎨 appearance</strong> — toggle dark/light mode, adjust brightness<br><br>
+<strong>👤 profile</strong> >>— set your display name and click the avatar to cycle through different emoji avatars. this shows up in the start menu and dashboard<br><br>
+<strong>💬 status</strong> >> pick a study mode status (studying hard, light study, resting, etc)<br><br>
+<strong>🎨 appearance</strong> >> toggle dark/light mode, adjust brightness<br><br>
 <strong>important:</strong> hit <em>save changes</em> to actually keep everything — it saves to your browser so it'll still be there next time you open the page!`,
     tip: "💡 tip: click the avatar emoji in settings to cycle through 12 different options including animals 🐱🦊🐼",
   },
   {
     emoji: "🎨",
-    title: "one last thing — pick your vibe!",
+    title: "one last thing.. pick your vibe!",
     body: `before you dive in, choose how you want studentOS to look. you can always change it later from settings or the 🌙 button in the taskbar.<br><br>pick whichever feels right for your studying environment :)`,
-    tip: "💡 tip: dark mode is easier on your eyes at night, light mode is great in bright rooms!",
+    tip: "💡 tip: dark mode is easier on your eyes at night, light mode is great in bright rooms! personally, i like using dark mode..",
     isThemePicker: true,
   },
 ];
