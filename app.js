@@ -15,6 +15,7 @@ const loadMessages = [
   "setting up workspace...",
   "almost done...",
   "welcome to studentOS :)",
+  "made by caelyn !!",
 ];
 
 let loadIdx = 0;
