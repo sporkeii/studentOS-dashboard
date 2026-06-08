@@ -1778,11 +1778,11 @@ the word count updates live at the bottom. and if you want to save what you wrot
     emoji: "⚙️",
     title: "settings + customization",
     body: `you can personalize the OS a little from settings:<br><br>
-<strong>👤 profile</strong> >>— set your display name and click the avatar to cycle through different emoji avatars. this shows up in the start menu and dashboard<br><br>
+<strong>👤 profile</strong> >> set your display name and click the avatar to cycle through different emoji avatars. this shows up in the start menu and dashboard<br><br>
 <strong>💬 status</strong> >> pick a study mode status (studying hard, light study, resting, etc)<br><br>
 <strong>🎨 appearance</strong> >> toggle dark/light mode, adjust brightness<br><br>
 <strong>important:</strong> hit <em>save changes</em> to actually keep everything — it saves to your browser so it'll still be there next time you open the page!`,
-    tip: "💡 tip: click the avatar emoji in settings to cycle through 12 different options including animals 🐱🦊🐼",
+    tip: "💡 tip: click the avatar emoji in settings to cycle through 12 different options including animals [ 🐱🦊🐼 ]",
   },
   {
     emoji: "🎨",
