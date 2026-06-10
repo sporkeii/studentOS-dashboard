@@ -14,7 +14,7 @@ it looks like a real desktop!! there's a taskbar at the bottom, draggable window
 **📚 student dashboard** <br>
 this is like the main one. it shows all your subjects with progress bars, a to-do list, and a study streak tracker (its like the github contribution graph but for studying lol). you can: <br>
 
-add and delete subjects <br>
+add subjects <br>
 add tasks for each subject and tag them as PETA, notes, or other <br>
 check off tasks and they get crossed out <br>
 add general tasks too (like "EXAMS!!!") <br>
