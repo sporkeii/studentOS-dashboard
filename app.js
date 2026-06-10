@@ -18,7 +18,7 @@ const loadMessages = [
   "made by caelyn !!",
 ];
 
-let loadIdx = 0;
+let loadIdx = 0;   // CURRENTLY DON'T KNOW THE USE CASE
 let loadPct = 0;
 const loaderBar = document.getElementById("loaderBar");
 const loaderText = document.getElementById("loaderText");
@@ -55,6 +55,7 @@ window.addEventListener("load", runLoader);
 function initDesktop() {
   startClock();
   initParticles();
+  applyTheme()
   // load saved profile into start menu on boot
   const savedName = localStorage.getItem("sos_name");
   const savedStatus = localStorage.getItem("sos_status");
@@ -96,7 +97,7 @@ function initParticles() {
 
   // small floating particles
   const particles = Array.from({ length: 60 }, () => ({
-    x: Math.random() * canvas.width,
+    x: Math.random() * canvas.width,    
     y: Math.random() * canvas.height,
     r: Math.random() * 1.5 + 0.3,
     vx: (Math.random() - 0.5) * 0.3,
@@ -571,8 +572,11 @@ function initDashboard() {
   updateDashSubLine();
   buildStreakGrid();
   const savedAvatar = localStorage.getItem("sos_avatar") || "👩‍💻";
+  const userName = localStorage.getItem("sos_name")
   const dashAvatar = document.querySelector(".dash-avatar");
+  const dashName = document.querySelector('.dash-user-name')
   if (dashAvatar) dashAvatar.textContent = savedAvatar;
+  if (userName) dashName.textContent = userName
 }
 
 // STREAK SYSTEM
@@ -1681,20 +1685,29 @@ function loadSettingsIntoPanel() {
 }
 
 // THEME
-
-let isLightMode = false;
+function applyTheme() {
+  const saved = localStorage.getItem("sos_theme") || "dark";
+  isLightMode = saved === "light";
+  document.body.classList.toggle("light-mode", isLightMode);
+}
 
 function toggleTheme() {
   isLightMode = !isLightMode;
   document.body.classList.toggle("light-mode", isLightMode);
-
+  
   // taskbar toggle btn emoji
   const tbBtn = document.getElementById("themeToggleBtn");
   if (tbBtn) tbBtn.textContent = isLightMode ? "☀️" : "🌙";
-
+  
   // settings label
   const lbl = document.getElementById("settingsThemeLabel");
   if (lbl) lbl.textContent = isLightMode ? "light" : "dark";
+
+  saveThemeSetting();
+}
+
+function saveThemeSetting() {
+  localStorage.setItem("sos_theme", isLightMode ? "light" : "dark");
 }
 
 // BRIGHTNESS
