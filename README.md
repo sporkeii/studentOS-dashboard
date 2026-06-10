@@ -9,7 +9,8 @@ it looks like a real desktop!! there's a taskbar at the bottom, draggable window
 
 ---
 
-### all the apps 📱 <br>
+### all the apps 📱 :: <br>
+
 📚 student dashboard <br>
 this is like the main one. it shows all your subjects with progress bars, a to-do list, and a study streak tracker (its like the github contribution graph but for studying lol). you can: <br>
 
@@ -87,4 +88,5 @@ things i know could be better <br>
 * on really small screens some things might look a little off <br>
 * the font and color for the 3d interactive mode could be better
 
+# PLEASE DO NOT USE MY CODE WITHOUT PERMISSION, THANK YOU !!
 - made all by myself + my headphones 
