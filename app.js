@@ -15,7 +15,6 @@ const loadMessages = [
   "setting up workspace...",
   "almost done...",
   "welcome to studentOS :)",
-  "made by caelyn !!",
 ];
 
 let loadIdx = 0;
@@ -49,12 +48,13 @@ function runLoader() {
   }, 120);
 }
 
-window.addEventListener("load", runLoader);
+window.addEventListener("load", () => { initTheme(); runLoader(); });
 
 // DESKTOP INIT
 function initDesktop() {
   startClock();
   initParticles();
+  updateThemeIcons();
   // load saved profile into start menu on boot
   const savedName = localStorage.getItem("sos_name");
   const savedStatus = localStorage.getItem("sos_status");
@@ -151,12 +151,33 @@ function openApp(appId) {
   // post-open init
   if (appId === "3d") setTimeout(init3D, 50);
   if (appId === "music") initMusicPlayer();
-  if (appId === "dashboard") {
-    initDashboard();
-  }
+  if (appId === "dashboard") initDashboard();
   if (appId === "notes") initNotes();
   if (appId === "timer") initTimer();
   if (appId === "settings") setTimeout(loadSettingsIntoPanel, 0);
+  if (appId === "planner") setTimeout(initPlanner, 0);
+
+  // mobile: center and size to viewport if needed
+  const isMobile = window.innerWidth <= 700;
+  if (isMobile) {
+    clone.style.left = "4px";
+    clone.style.top = "4px";
+    clone.style.width = (window.innerWidth - 8) + "px";
+    clone.style.height = (window.innerHeight - 60) + "px";
+  } else {
+    // clamp position so window is never off-screen on any screen size
+    const maxLeft = Math.max(0, window.innerWidth - 200);
+    const maxTop  = Math.max(0, window.innerHeight - 120);
+    const curLeft = parseInt(clone.style.left) || 60;
+    const curTop  = parseInt(clone.style.top)  || 60;
+    clone.style.left = Math.min(curLeft, maxLeft) + "px";
+    clone.style.top  = Math.min(curTop,  maxTop)  + "px";
+    // clamp width/height so it doesn't overflow
+    const winW = parseInt(clone.style.width)  || 500;
+    const winH = parseInt(clone.style.height) || 400;
+    clone.style.width  = Math.min(winW, window.innerWidth  - parseInt(clone.style.left) - 8)  + "px";
+    clone.style.height = Math.min(winH, window.innerHeight - parseInt(clone.style.top)  - 56) + "px";
+  }
 
   // click to bring to front
   clone.addEventListener("mousedown", () => bringToFront(clone));
@@ -189,6 +210,8 @@ function addTaskbarBtn(appId) {
     music: "🎵 Music",
     notes: "📝 Notes",
     timer: "⏰ Timer",
+    planner: "📅 Planner",
+    settings: "⚙️ Settings",
   };
   const btn = document.createElement("button");
   btn.className = "taskbar-app-btn";
@@ -256,16 +279,69 @@ document.addEventListener("mouseup", () => {
 
 // DASHBOARD — SUBJECTS + TASKS SYSTEM
 
-const SUBJECT_COLORS = {
-  Mathematics: "#00ffcc",
-  Science: "#ff6eb4",
-  English: "#ffe066",
-  MSCS: "#a78bfa",
-  ICT: "#38bdf8",
-  "TLE/Robotics": "#fb923c",
-  Filipino: "#f472b6",
-  "AP/ESP": "#34d399",
-};
+// Default colors pool for new subjects
+const COLOR_POOL = ["#00ffcc","#ff6eb4","#ffe066","#a78bfa","#38bdf8","#fb923c","#f472b6","#34d399","#f87171","#818cf8","#fbbf24","#4ade80"];
+
+function getSubjectColors() {
+  try {
+    const saved = localStorage.getItem("sos_subject_colors");
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return {
+    Mathematics: "#00ffcc",
+    Science: "#ff6eb4",
+    English: "#ffe066",
+    MSCS: "#a78bfa",
+    ICT: "#38bdf8",
+    "TLE/Robotics": "#fb923c",
+    Filipino: "#f472b6",
+    "AP/ESP": "#34d399",
+  };
+}
+function saveSubjectColors(c) {
+  localStorage.setItem("sos_subject_colors", JSON.stringify(c));
+}
+
+// expose as SUBJECT_COLORS-like live getter
+function getSubjectColor(subj) {
+  return getSubjectColors()[subj] || "#ff6eb4";
+}
+
+function addNewSubject() {
+  const inp = document.getElementById("newSubjNameInput");
+  if (!inp) return;
+  const name = inp.value.trim();
+  if (!name) return;
+  const colors = getSubjectColors();
+  if (colors[name]) { inp.value = ""; return; } // already exists
+  // pick next color
+  const usedColors = Object.values(colors);
+  const next = COLOR_POOL.find(c => !usedColors.includes(c)) || COLOR_POOL[Object.keys(colors).length % COLOR_POOL.length];
+  colors[name] = next;
+  saveSubjectColors(colors);
+  // init empty task list for it
+  const tasks = loadSubjectTasks();
+  if (!tasks[name]) { tasks[name] = []; saveSubjectTasks(tasks); }
+  inp.value = "";
+  activeSubject = name;
+  buildSubjectTabs();
+  renderSubjectDetail();
+}
+
+function deleteCurrentSubject() {
+  const colors = getSubjectColors();
+  const subjects = Object.keys(colors);
+  if (subjects.length <= 1) return; // keep at least one
+  delete colors[activeSubject];
+  saveSubjectColors(colors);
+  const tasks = loadSubjectTasks();
+  delete tasks[activeSubject];
+  saveSubjectTasks(tasks);
+  activeSubject = Object.keys(colors)[0];
+  buildSubjectTabs();
+  renderSubjectDetail();
+  updateDashSubLine();
+}
 
 // Task types and their weight ranges
 // PETA/project: 60-80%, notebook/book: 30-40%, other: 20-30%
@@ -370,37 +446,50 @@ function buildSubjectTabs() {
   const container = document.getElementById("subjTabs");
   if (!container) return;
   container.innerHTML = "";
-  const subjects = Object.keys(SUBJECT_COLORS);
+  const colors = getSubjectColors();
+  const subjects = Object.keys(colors);
+
+  // ensure activeSubject is valid
+  if (!colors[activeSubject]) activeSubject = subjects[0] || "";
+
   subjects.forEach((subj) => {
     const btn = document.createElement("button");
     btn.className = "subj-tab-btn" + (subj === activeSubject ? " active" : "");
     btn.textContent = subj;
-    btn.style.setProperty("--sc", SUBJECT_COLORS[subj]);
+    btn.style.setProperty("--sc", colors[subj]);
     btn.onclick = () => {
       activeSubject = subj;
-      document
-        .querySelectorAll(".subj-tab-btn")
-        .forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".subj-tab-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       renderSubjectDetail();
     };
     container.appendChild(btn);
   });
+
+  // Add-subject mini row
+  const addRow = document.createElement("div");
+  addRow.className = "add-subject-row";
+  addRow.innerHTML = `<input type="text" id="newSubjNameInput" placeholder="+ new subject" maxlength="24" /><button onclick="addNewSubject()">+</button>`;
+  container.appendChild(addRow);
 }
 
 function renderSubjectDetail() {
   const panel = document.getElementById("subjDetail");
   if (!panel) return;
   const subjectData = loadSubjectTasks();
+  const colors = getSubjectColors();
   const tasks = subjectData[activeSubject] || [];
   const pct = calcSubjectPct(tasks);
-  const color = SUBJECT_COLORS[activeSubject];
+  const color = colors[activeSubject] || "#ff6eb4";
   const allDone = tasks.length > 0 && tasks.every((t) => t.done);
 
   panel.innerHTML = `
     <div class="subj-detail-header">
       <span class="subj-detail-name" style="color:${color}">${activeSubject}</span>
-      <span class="subj-detail-pct" style="color:${color}">${pct}%</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="subj-detail-pct" style="color:${color}">${pct}%</span>
+        <button class="subj-del-btn" onclick="deleteCurrentSubject()" title="delete subject">🗑</button>
+      </div>
     </div>
     <div class="prog-bar subj-prog-bar">
       <div class="prog-fill" style="width:${pct}%;--c:${color};"></div>
@@ -413,7 +502,7 @@ function renderSubjectDetail() {
           <label class="task-item${t.done ? " struck" : ""}">
             <input type="checkbox" ${t.done ? "checked" : ""} onchange="toggleSubjTask(${i},this)" />
             ${t.name}
-            <span class="task-type-badge">${getTaskBadge(t.name)}</span>
+            <span class="task-type-badge">${getTaskBadge(t.name, t.type)}</span>
           </label>
           <button class="task-del-btn" onclick="deleteSubjTask(${i})" title="delete">✕</button>
         </div>
@@ -424,6 +513,12 @@ function renderSubjectDetail() {
     ${allDone ? `<div class="tasks-all-done">🎉 tasks completed!</div>` : ""}
     <div class="add-task subj-add-task">
       <input type="text" id="newSubjTaskInput" placeholder="add task for ${activeSubject}..." />
+      <select id="newSubjTaskType" class="task-type-sel">
+        <option value="">type</option>
+        <option value="peta">PETA</option>
+        <option value="notes">notes</option>
+        <option value="other">other</option>
+      </select>
       <button onclick="addSubjTask()">+</button>
     </div>
   `;
@@ -433,19 +528,19 @@ function renderSubjectDetail() {
   if (fill) {
     fill.style.width = "0%";
     requestAnimationFrame(() =>
-      setTimeout(() => {
-        fill.style.width = pct + "%";
-      }, 30),
+      setTimeout(() => { fill.style.width = pct + "%"; }, 30),
     );
   }
 }
 
-function getTaskBadge(name) {
+function getTaskBadge(name, type) {
+  if (type === "peta") return "PETA";
+  if (type === "notes") return "notes";
+  if (type === "other") return "other";
+  // auto-detect from name
   const n = name.toLowerCase();
-  if (n.includes("peta") || n.includes("project") || n.includes("codemonkey"))
-    return "PETA";
-  if (n.includes("notebook") || n.includes("book") || n.includes("journal"))
-    return "notes";
+  if (n.includes("peta") || n.includes("project") || n.includes("codemonkey")) return "PETA";
+  if (n.includes("notebook") || n.includes("book") || n.includes("journal") || n.includes("notes")) return "notes";
   return "other";
 }
 
@@ -469,14 +564,17 @@ function deleteSubjTask(idx) {
 
 function addSubjTask() {
   const input = document.getElementById("newSubjTaskInput");
+  const typeEl = document.getElementById("newSubjTaskType");
   if (!input) return;
   const val = input.value.trim();
   if (!val) return;
+  const type = typeEl ? typeEl.value : "";
   const subjectData = loadSubjectTasks();
   if (!subjectData[activeSubject]) subjectData[activeSubject] = [];
-  subjectData[activeSubject].push({ name: val, done: false });
+  subjectData[activeSubject].push({ name: val, done: false, type });
   saveSubjectTasks(subjectData);
   input.value = "";
+  if (typeEl) typeEl.value = "";
   renderSubjectDetail();
   updateDashSubLine();
 }
@@ -540,9 +638,7 @@ function updateDashSubLine() {
   const genTasks = loadGeneralTasks();
   const pending = genTasks.filter((t) => !t.done).length;
   const subjectData = loadSubjectTasks();
-  const allSubjPct = Object.keys(subjectData).map((s) =>
-    calcSubjectPct(subjectData[s]),
-  );
+  const allSubjPct = Object.keys(subjectData).map((s) => calcSubjectPct(subjectData[s]));
   const avgPct = allSubjPct.length
     ? Math.round(allSubjPct.reduce((a, b) => a + b, 0) / allSubjPct.length)
     : 0;
@@ -571,8 +667,18 @@ function initDashboard() {
   updateDashSubLine();
   buildStreakGrid();
   const savedAvatar = localStorage.getItem("sos_avatar") || "👩‍💻";
-  const dashAvatar = document.querySelector(".dash-avatar");
-  if (dashAvatar) dashAvatar.textContent = savedAvatar;
+  const savedName   = localStorage.getItem("sos_name")   || "";
+  // scope to dashboard window to avoid grabbing wrong element
+  const win = document.getElementById("win-dashboard");
+  if (win) {
+    const dashAvatar = win.querySelector(".dash-avatar");
+    if (dashAvatar) dashAvatar.textContent = savedAvatar;
+    const greetEl = win.querySelector("#dashGreeting");
+    if (greetEl) {
+      const name = savedName && savedName !== "Student User" ? savedName : null;
+      greetEl.textContent = name ? `hello ${name}, welcome back! 👋` : "hey, welcome back! 👋";
+    }
+  }
 }
 
 // STREAK SYSTEM
@@ -675,33 +781,31 @@ function buildStreakGrid() {
 }
 
 function updateStreakStats(data) {
-  // calculate current streak (consecutive days going back from today)
+  // current streak: consecutive days back from today
+  // a gap of 1 skipped day resets the streak
   let current = 0;
   for (let i = 0; i < 84; i++) {
     if (data[dateKey(i)]) current++;
     else break;
   }
 
-  // calculate best streak
-  let best = 0,
-    run = 0;
+  // best streak in window
+  let best = 0, run = 0;
   for (let i = 83; i >= 0; i--) {
-    if (data[dateKey(i)]) {
-      run++;
-      best = Math.max(best, run);
-    } else run = 0;
+    if (data[dateKey(i)]) { run++; best = Math.max(best, run); }
+    else run = 0;
   }
 
   const total = Object.keys(data).filter((k) => data[k] > 0).length;
 
   const elCurrent = document.getElementById("streakCurrent");
-  const elBest = document.getElementById("streakBest");
-  const elTotal = document.getElementById("streakTotal");
-  const elTip = document.getElementById("streakTip");
+  const elBest    = document.getElementById("streakBest");
+  const elTotal   = document.getElementById("streakTotal");
+  const elTip     = document.getElementById("streakTip");
 
   if (elCurrent) elCurrent.textContent = current;
-  if (elBest) elBest.textContent = Math.max(best, 21); // keep 21 as floor for demo
-  if (elTotal) elTotal.textContent = Math.max(total, 47);
+  if (elBest)    elBest.textContent    = best;
+  if (elTotal)   elTotal.textContent   = total;
 
   if (elTip) {
     const todayLogged = !!data[dateKey(0)];
@@ -710,7 +814,12 @@ function updateStreakStats(data) {
     } else if (current > 0) {
       elTip.textContent = `⚠️ you're on a ${current}-day streak — don't forget to log today!`;
     } else {
-      elTip.textContent = `👋 no streak yet — hit "+ log today" after studying to start one!`;
+      const lastStudied = Array.from({length:84},(_,i)=>i).find(i => data[dateKey(i)]);
+      if (lastStudied) {
+        elTip.textContent = `😬 streak broke ${lastStudied} day${lastStudied>1?'s':''} ago — start a new one!`;
+      } else {
+        elTip.textContent = `👋 no streak yet — hit "+ log today" after studying to start one!`;
+      }
     }
   }
 }
@@ -1659,6 +1768,13 @@ function applyProfileToUI(name, status, avatar) {
 
   const dashAvatar = document.querySelector(".dash-avatar");
   if (dashAvatar) dashAvatar.textContent = avatar;
+
+  // update greeting if dashboard is open
+  const greetEl = document.getElementById("dashGreeting");
+  if (greetEl) {
+    const displayName = name && name !== "Student User" ? name : null;
+    greetEl.textContent = displayName ? `hello ${displayName}, welcome back! 👋` : "hey, welcome back! 👋";
+  }
 }
 
 function loadSettingsIntoPanel() {
@@ -1684,9 +1800,21 @@ function loadSettingsIntoPanel() {
 
 let isLightMode = false;
 
+function initTheme() {
+  const saved = localStorage.getItem("sos_theme");
+  isLightMode = saved === "light";
+  document.body.classList.toggle("light-mode", isLightMode);
+  const tbBtn = document.getElementById("themeToggleBtn");
+  if (tbBtn) tbBtn.textContent = isLightMode ? "☀️" : "🌙";
+}
+
 function toggleTheme() {
   isLightMode = !isLightMode;
   document.body.classList.toggle("light-mode", isLightMode);
+  localStorage.setItem("sos_theme", isLightMode ? "light" : "dark");
+
+  // update icon visibility
+  updateThemeIcons();
 
   // taskbar toggle btn emoji
   const tbBtn = document.getElementById("themeToggleBtn");
@@ -1695,6 +1823,15 @@ function toggleTheme() {
   // settings label
   const lbl = document.getElementById("settingsThemeLabel");
   if (lbl) lbl.textContent = isLightMode ? "light" : "dark";
+}
+
+function updateThemeIcons() {
+  document.querySelectorAll(".icon-dark").forEach(img => {
+    img.style.display = isLightMode ? "none" : "block";
+  });
+  document.querySelectorAll(".icon-light").forEach(img => {
+    img.style.display = isLightMode ? "block" : "none";
+  });
 }
 
 // BRIGHTNESS
@@ -1783,7 +1920,7 @@ the word count updates live at the bottom. and if you want to save what you wrot
 <strong>💬 status</strong> >> pick a study mode status (studying hard, light study, resting, etc)<br><br>
 <strong>🎨 appearance</strong> >> toggle dark/light mode, adjust brightness<br><br>
 <strong>important:</strong> hit <em>save changes</em> to actually keep everything — it saves to your browser so it'll still be there next time you open the page!`,
-    tip: "💡 tip: click the avatar emoji in settings to cycle through 12 different options including animals [ 🐱🦊🐼 ]",
+    tip: "💡 tip: click the avatar emoji in settings to cycle through 12 different options including animals 🐱🦊🐼",
   },
   {
     emoji: "🎨",
@@ -1937,4 +2074,184 @@ function maybeShowWelcome() {
       requestAnimationFrame(() => modal.classList.add("visible"));
     }
   }
+}
+
+//  EXAM PLANNER 
+
+let selectedExamId = null;
+
+function loadExams() {
+  try { return JSON.parse(localStorage.getItem("sos_exams") || "[]"); }
+  catch { return []; }
+}
+function saveExams(arr) { localStorage.setItem("sos_exams", JSON.stringify(arr)); }
+
+function addExam() {
+  const nameEl    = document.getElementById("examName");
+  const subjectEl = document.getElementById("examSubject");
+  const dateEl    = document.getElementById("examDate");
+  if (!nameEl || !dateEl) return;
+  const name    = nameEl.value.trim();
+  const subject = subjectEl ? subjectEl.value.trim() : "";
+  const date    = dateEl.value;
+  if (!name || !date) return;
+
+  const exams = loadExams();
+  exams.push({ id: Date.now(), name, subject, date, tasks: [] });
+  saveExams(exams);
+  nameEl.value = "";
+  if (subjectEl) subjectEl.value = "";
+  dateEl.value = "";
+  renderExamList();
+}
+
+function deleteExam(id) {
+  let exams = loadExams();
+  exams = exams.filter(e => e.id !== id);
+  saveExams(exams);
+  if (selectedExamId === id) {
+    selectedExamId = null;
+    const detail = document.getElementById("plannerDetail");
+    if (detail) detail.style.display = "none";
+  }
+  renderExamList();
+}
+
+function selectExam(id) {
+  selectedExamId = id;
+  renderExamList();
+  renderPlannerDetail();
+}
+
+function daysUntil(dateStr) {
+  const now   = new Date(); now.setHours(0,0,0,0);
+  const target = new Date(dateStr + "T00:00:00");
+  return Math.round((target - now) / 86400000);
+}
+
+function renderExamList() {
+  const list = document.getElementById("examList");
+  if (!list) return;
+  const exams = loadExams();
+  if (!exams.length) {
+    list.innerHTML = `<div class="exam-empty">no exams yet — add one above!</div>`;
+    return;
+  }
+  // sort by date
+  exams.sort((a, b) => new Date(a.date) - new Date(b.date));
+  list.innerHTML = exams.map(e => {
+    const days = daysUntil(e.date);
+    const urgency = days < 0 ? "past" : days === 0 ? "today" : days <= 3 ? "soon" : "ok";
+    const daysLabel = days < 0 ? `${Math.abs(days)}d ago` : days === 0 ? "TODAY!" : `${days}d away`;
+    const doneTasks = e.tasks ? e.tasks.filter(t => t.done).length : 0;
+    const totalTasks = e.tasks ? e.tasks.length : 0;
+    const isSelected = e.id === selectedExamId;
+    return `
+      <div class="exam-item ${urgency}${isSelected ? " selected" : ""}" onclick="selectExam(${e.id})">
+        <div class="exam-item-left">
+          <div class="exam-item-name">${e.name}</div>
+          ${e.subject ? `<div class="exam-item-subj">${e.subject}</div>` : ""}
+          ${totalTasks ? `<div class="exam-item-tasks">${doneTasks}/${totalTasks} tasks</div>` : ""}
+        </div>
+        <div class="exam-item-right">
+          <div class="exam-item-days ${urgency}">${daysLabel}</div>
+          <div class="exam-item-date">${new Date(e.date + "T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
+          <button class="exam-del-btn" onclick="event.stopPropagation();deleteExam(${e.id})" title="delete">✕</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function renderPlannerDetail() {
+  const exams  = loadExams();
+  const exam   = exams.find(e => e.id === selectedExamId);
+  const detail = document.getElementById("plannerDetail");
+  if (!detail || !exam) { if (detail) detail.style.display = "none"; return; }
+  detail.style.display = "flex";
+
+  const titleEl     = document.getElementById("plannerDetailTitle");
+  const dateEl      = document.getElementById("plannerDetailDate");
+  const countEl     = document.getElementById("plannerCountdown");
+  const taskListEl  = document.getElementById("plannerTaskList");
+  const progFill    = document.getElementById("plannerProgFill");
+  const progLabel   = document.getElementById("plannerProgLabel");
+
+  if (titleEl)    titleEl.textContent   = exam.name + (exam.subject ? ` · ${exam.subject}` : "");
+  if (dateEl)     dateEl.textContent    = new Date(exam.date + "T00:00:00").toLocaleDateString("en-US",{weekday:"short",month:"long",day:"numeric",year:"numeric"});
+
+  const days = daysUntil(exam.date);
+  if (countEl) {
+    countEl.textContent = days < 0 ? `exam was ${Math.abs(days)} day${Math.abs(days)>1?'s':''} ago`
+                        : days === 0 ? `exam is TODAY! 🔥`
+                        : `${days} day${days>1?'s':''} away`;
+    countEl.className = "planner-countdown " + (days < 0 ? "past" : days <= 3 ? "soon" : "ok");
+  }
+
+  const tasks = exam.tasks || [];
+  const done  = tasks.filter(t => t.done).length;
+  const pct   = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+  if (progFill)  progFill.style.width  = pct + "%";
+  if (progLabel) progLabel.textContent = pct + "%";
+
+  if (taskListEl) {
+    taskListEl.innerHTML = tasks.map((t, i) => `
+      <div class="task-row">
+        <label class="task-item${t.done ? " struck" : ""}">
+          <input type="checkbox" ${t.done ? "checked" : ""} onchange="togglePlannerTask(${i},this)" />
+          ${t.name}
+          ${t.type ? `<span class="task-type-badge">${t.type}</span>` : ""}
+        </label>
+        <button class="task-del-btn" onclick="deletePlannerTask(${i})" title="delete">✕</button>
+      </div>`).join("") || `<div class="exam-empty">no study tasks yet</div>`;
+  }
+}
+
+function addPlannerTask() {
+  const inp     = document.getElementById("newPlannerTask");
+  const typeEl  = document.getElementById("plannerTaskType");
+  if (!inp || !selectedExamId) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  const type = typeEl ? typeEl.value : "other";
+  const exams = loadExams();
+  const exam  = exams.find(e => e.id === selectedExamId);
+  if (!exam) return;
+  if (!exam.tasks) exam.tasks = [];
+  exam.tasks.push({ name: val, done: false, type });
+  saveExams(exams);
+  inp.value = "";
+  renderPlannerDetail();
+  renderExamList();
+}
+
+function togglePlannerTask(idx, cb) {
+  const exams = loadExams();
+  const exam  = exams.find(e => e.id === selectedExamId);
+  if (!exam || !exam.tasks[idx]) return;
+  exam.tasks[idx].done = cb.checked;
+  saveExams(exams);
+  renderPlannerDetail();
+  renderExamList();
+}
+
+function deletePlannerTask(idx) {
+  const exams = loadExams();
+  const exam  = exams.find(e => e.id === selectedExamId);
+  if (!exam) return;
+  exam.tasks.splice(idx, 1);
+  saveExams(exams);
+  renderPlannerDetail();
+  renderExamList();
+}
+
+function initPlanner() {
+  renderExamList();
+  // allow Enter key on exam inputs
+  const nameEl = document.getElementById("examName");
+  const dateEl = document.getElementById("examDate");
+  if (nameEl) nameEl.addEventListener("keydown", e => { if (e.key === "Enter") addExam(); });
+  if (dateEl) dateEl.addEventListener("keydown", e => { if (e.key === "Enter") addExam(); });
+  // allow Enter key on planner task input
+  const taskInp = document.getElementById("newPlannerTask");
+  if (taskInp) taskInp.addEventListener("keydown", e => { if (e.key === "Enter") addPlannerTask(); });
 }
