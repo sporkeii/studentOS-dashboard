@@ -14,7 +14,10 @@
 <!-- 6/08/2026, 11:19AM -->
 <!-- 6/08/2026, 1:31PM -->
 <!-- 6/08/2026, 8:34PM -->
+<!-- 6/08/2026, 9:51PM -->
 
+<!-- 6/09/2026, 11:14PM -->
+<!-- END!!!: 6/09/2026, 12:22PM -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +34,7 @@
 <div id="loader">
   <div class="loader-inner">
     <div class="loader-logo">studentOS</div>
-    <div class="loader-version">version 2.0 !</div>
+    <div class="loader-version">version 2.0 - made by caelyn !</div>
     <div class="loader-bar-wrap">
       <div class="loader-bar" id="loaderBar"></div>
     </div>
@@ -52,31 +55,67 @@
   <!-- desktop icons -->
   <div class="icon-grid">
     <div class="desk-icon" onclick="openApp('dashboard')">
-      <div class="icon-img">📚</div>
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/studentdashboard_dark.png"  alt="Dashboard" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/studentdashboard_light.png" alt="Dashboard" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">📚</span>
+      </div>
       <span>Student<br/>Dashboard</span>
     </div>
     <div class="desk-icon" onclick="openApp('3d')">
-      <div class="icon-img">🌌</div>
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/3Dinteractive_dark.png"  alt="3D" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/3Dinteractive_light.png" alt="3D" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">🌌</span>
+      </div>
       <span>3D<br/>Interactive</span>
     </div>
     <div class="desk-icon" onclick="openApp('music')">
-      <div class="icon-img">🎵</div>
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/musicplayer_dark.png"  alt="Music" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/musicplayer_light.png" alt="Music" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">🎵</span>
+      </div>
       <span>Music<br/>Player</span>
     </div>
     <div class="desk-icon" onclick="openApp('notes')">
-      <div class="icon-img">📝</div>
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/notesapp_dark.png"  alt="Notes" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/notesapp_light.png" alt="Notes" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">📝</span>
+      </div>
       <span>Notes<br/>App</span>
     </div>
     <div class="desk-icon" onclick="openApp('timer')">
-      <div class="icon-img">⏰</div>
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/studytimer_dark.png"  alt="Timer" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/studytimer_light.png" alt="Timer" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">⏰</span>
+      </div>
       <span>Study<br/>Timer</span>
     </div>
+    <div class="desk-icon" onclick="openApp('planner')">
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/examplanner_dark.png"  alt="Planner" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/examplanner_light.png" alt="Planner" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">📅</span>
+      </div>
+      <span>Exam<br/>Planner</span>
+    </div>
     <div class="desk-icon" onclick="openApp('settings')">
-      <div class="icon-img">⚙️</div>
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/settings_dark.png"  alt="Settings" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/settings_light.png" alt="Settings" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">⚙️</span>
+      </div>
       <span>Settings</span>
     </div>
     <div class="desk-icon" onclick="openGuide()">
-      <div class="icon-img">💡</div>
+      <div class="icon-img icon-img-themed">
+        <img class="icon-dark"  src="icons/guide_dark.png"  alt="Guide" onerror="this.style.display='none';this.parentNode.querySelector('.icon-fallback').style.display='block'"/>
+        <img class="icon-light" src="icons/guide_light.png" alt="Guide" onerror="this.style.display='none'"/>
+        <span class="icon-fallback" style="display:none">💡</span>
+      </div>
       <span>Guide</span>
     </div>
   </div>
@@ -129,6 +168,7 @@
     </div>
     <div class="start-items">
       <div class="start-item" onclick="openApp('dashboard');toggleStartMenu()">📚 Dashboard</div>
+      <div class="start-item" onclick="openApp('planner');toggleStartMenu()">📅 Exam Planner</div>
       <div class="start-item" onclick="openApp('music');toggleStartMenu()">🎵 Music Player</div>
       <div class="start-item" onclick="openApp('3d');toggleStartMenu()">🌌 3D Mode</div>
       <div class="start-item" onclick="openApp('notes');toggleStartMenu()">📝 Notes</div>
@@ -160,7 +200,7 @@
     <div class="dash-welcome">
       <div class="dash-avatar">👩‍💻</div>
       <div>
-        <h2 class="dash-greeting">hey, welcome back! 👋</h2>
+        <h2 class="dash-greeting" id="dashGreeting">hey, welcome back! 👋</h2>
         <p class="dash-sub" id="dashSubLine">loading tasks...</p>
       </div>
     </div>
@@ -189,7 +229,7 @@
           <h3 class="card-title">🗂️ general tasks</h3>
           <div class="task-list" id="generalTaskList"></div>
           <div class="add-task">
-            <input type="text" id="newGenTaskInput" placeholder="add task (e.g. EXAMS!!!)" />
+            <input type="text" id="newGenTaskInput" placeholder="add task (e.g. EXAMS!!!)" onkeydown="if(event.key==='Enter')addGeneralTask()" />
             <button onclick="addGeneralTask()">+</button>
           </div>
           <div class="tasks-all-done hidden" id="generalAllDone">🎉 tasks completed!</div>
@@ -225,6 +265,7 @@
             <div class="sl-box sl-4"></div>
             <span>more</span>
           </div>
+          <div class="streak-tip" id="streakTip"></div>
         </div>
 
       </div>
@@ -530,6 +571,70 @@
     </div>
   </div>
 </div>
+
+<!-- exam planner template -->
+<template id="tpl-planner">
+<div class="app-window" id="win-planner" style="top:70px;left:100px;width:640px;height:520px;">
+  <div class="win-titlebar" onmousedown="startDrag(event,'win-planner')">
+    <span class="win-title">📅 Exam Planner</span>
+    <div class="win-btns">
+      <button class="win-min" onclick="minimizeWin('win-planner')">_</button>
+      <button class="win-close" onclick="closeApp('planner','win-planner')">✕</button>
+    </div>
+  </div>
+  <div class="win-body planner-body">
+
+    <!-- top controls -->
+    <div class="planner-top">
+      <div class="planner-add-row">
+        <input type="text" id="examName" placeholder="exam name (e.g. Math Finals)" />
+        <input type="text" id="examSubject" placeholder="subject" />
+        <input type="date" id="examDate" />
+        <button onclick="addExam()">+ add exam</button>
+      </div>
+    </div>
+
+    <!-- exam list -->
+    <div class="planner-list-wrap">
+      <div class="planner-section-title">📋 upcoming exams</div>
+      <div id="examList" class="exam-list"></div>
+    </div>
+
+    <!-- study plan for selected exam -->
+    <div class="planner-detail" id="plannerDetail" style="display:none;">
+      <div class="planner-detail-header">
+        <div class="planner-detail-title" id="plannerDetailTitle">exam name</div>
+        <div class="planner-detail-date" id="plannerDetailDate">date</div>
+      </div>
+      <div class="planner-countdown" id="plannerCountdown">0 days away</div>
+
+      <div class="planner-tasks-section">
+        <div class="planner-section-title">📝 study tasks for this exam</div>
+        <div id="plannerTaskList" class="planner-task-list"></div>
+        <div class="planner-add-task-row">
+          <input type="text" id="newPlannerTask" placeholder="add study task..." />
+          <select id="plannerTaskType">
+            <option value="notes">notes</option>
+            <option value="peta">PETA / project</option>
+            <option value="review">review</option>
+            <option value="practice">practice test</option>
+            <option value="other">other</option>
+          </select>
+          <button onclick="addPlannerTask()">+</button>
+        </div>
+      </div>
+
+      <div class="planner-progress-row">
+        <span class="planner-prog-label" id="plannerProgLabel">0%</span>
+        <div class="prog-bar planner-prog-bar">
+          <div class="prog-fill" id="plannerProgFill" style="width:0%;--c:var(--pink)"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</template>
 
 <script src="app.js"></script>
 </body>
