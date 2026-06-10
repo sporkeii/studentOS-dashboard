@@ -165,27 +165,8 @@ body.light-mode .wallpaper-grid {
 }
 body.light-mode #desktop::after { opacity: 0.25; }
 
-/* ICONS */
-.icon-grid {
-  position: absolute; top: 20px; left: 20px;
-  display: flex; flex-direction: column;
-  gap: 14px; z-index: 10;
-}
-.desk-icon {
-  display: flex; flex-direction: column; align-items: center;
-  width: 72px; gap: 5px; cursor: pointer; padding: 8px 4px; border-radius: 8px;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.desk-icon:hover { background: rgba(255,61,154,0.1); transform: scale(1.06); }
-body.light-mode .desk-icon:hover { background: rgba(233,30,140,0.08); }
+/* ICONS — see consolidated rules further below */
 .desk-icon:active { transform: scale(0.95); }
-.icon-img {
-  font-size: 28px;
-  filter: drop-shadow(0 0 6px rgba(255,61,154,0.35));
-  transition: filter 0.2s;
-}
-.desk-icon:hover .icon-img { filter: drop-shadow(0 0 14px var(--pink)); }
 .desk-icon span {
   font-size: 9px; color: var(--text);
   text-align: center; line-height: 1.3;
@@ -403,7 +384,7 @@ body.light-mode .add-task input { background: rgba(0,0,0,0.03); border-color: rg
 }
 .add-task button:hover { opacity: 0.82; }
 
-/* streak section.. spent a while getting this to match the card vibe just right */
+/* streak section.. spent a DAY getting this to match the card vibe just right */
 
 /* header row: title + log button side by side */
 .streak-header-row {
@@ -544,7 +525,7 @@ body.light-mode .mode-btn { border-color: rgba(0,0,0,0.1); }
 }
 .music-layout { display: flex; flex: 1; overflow: hidden; }
 
-/* now playing. the album art spins and i am SO proud of that */
+/* now playing. the album art spins and i am SO proud of that!! i didnt have to make a version of it as a circle😭 */
 .now-playing {
   width: 260px; flex-shrink: 0; padding: 16px;
   display: flex; flex-direction: column; align-items: center;
@@ -1164,12 +1145,7 @@ body.light-mode .guide-dot { background: rgba(0,0,0,0.12); }
   text-transform: uppercase; letter-spacing: 0.5px;
 }
 
-/* subject add task row */
-.subj-add-task {
-  margin-top: auto; padding-top: 6px;
-  border-top: 1px solid var(--card-border);
-}
-.subj-add-task input { font-size: 10px; }
+/* subject add task row — see consolidated rules further below */
 
 /* Right column */
 .dash-col-right {
@@ -1251,3 +1227,397 @@ body.light-mode .guide-dot { background: rgba(0,0,0,0.12); }
   color: var(--pink); letter-spacing: 0.5px;
 }
 .gtp-desc { font-size: 9.5px; color: var(--text-dim); text-align: center; }
+/*  ICON GRID — consolidated (auto-fit, all icons always visible)  */
+.icon-grid {
+  position: absolute;
+  top: 20px; left: 20px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  max-height: calc(100vh - 80px);
+  gap: 10px;
+  z-index: 10;
+  align-content: flex-start;
+}
+.desk-icon {
+  display: flex; flex-direction: column; align-items: center;
+  width: 70px; gap: 5px; cursor: pointer; padding: 8px 4px; border-radius: 8px;
+  transition: background 0.2s, transform 0.2s;
+}
+.desk-icon:hover { background: rgba(255,61,154,0.1); transform: scale(1.06); }
+body.light-mode .desk-icon:hover { background: rgba(233,30,140,0.08); }
+.desk-icon:active { transform: scale(0.95); }
+.desk-icon span {
+  font-size: 9px; color: var(--text);
+  text-align: center; line-height: 1.3;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.7);
+}
+body.light-mode .desk-icon span { text-shadow: none; }
+
+/* emoji fallback icon */
+.icon-img {
+  font-size: 26px;
+  filter: drop-shadow(0 0 6px rgba(255,61,154,0.35));
+  transition: filter 0.22s;
+}
+.desk-icon:hover .icon-img {
+  filter: drop-shadow(0 0 14px var(--pink)) drop-shadow(0 0 22px rgba(255,61,154,0.5));
+}
+
+/*  ICON IMAGE (light/dark themed jpg) */
+.icon-img-themed {
+  position: relative;
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; overflow: hidden; flex-shrink: 0;
+  background: rgba(255,61,154,0.07);
+  border: 1px solid rgba(255,61,154,0.18);
+  transition: box-shadow 0.22s, border-color 0.22s;
+}
+.icon-img-themed img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; border-radius: 11px;
+  transition: opacity 0.2s;
+}
+.icon-fallback { font-size: 26px; z-index: 1; position: relative; }
+
+/* show dark icon by default, light icon in light-mode */
+.icon-dark  { display: block; }
+.icon-light { display: none; }
+body.light-mode .icon-dark  { display: none; }
+body.light-mode .icon-light { display: block; }
+
+/* hover glow */
+.desk-icon:hover .icon-img-themed {
+  box-shadow: 0 0 18px var(--pink), 0 0 36px rgba(255,61,154,0.35);
+  border-color: var(--pink);
+}
+body.light-mode .desk-icon:hover .icon-img-themed {
+  box-shadow: 0 0 10px rgba(233,30,140,0.45);
+  border-color: var(--pink);
+}
+
+/*  ADD SUBJECT ROW */
+.add-subject-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  align-items: center;
+}
+.add-subject-row input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,61,154,0.3);
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-family: var(--font-main);
+  font-size: 9px;
+  color: var(--text-dim);
+  outline: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+body.light-mode .add-subject-row input { background: rgba(0,0,0,0.03); }
+.add-subject-row input:focus { border-color: var(--pink); color: var(--text); }
+.add-subject-row input::placeholder { color: var(--text-dim); opacity: 0.7; }
+.add-subject-row button {
+  background: rgba(255,61,154,0.08);
+  border: 1px solid rgba(255,61,154,0.3);
+  color: var(--pink); border-radius: 50%;
+  width: 20px; height: 20px; font-size: 14px;
+  cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.18s;
+  line-height: 1;
+  padding: 0;
+}
+.add-subject-row button:hover { background: var(--pink); color: #fff; }
+
+/*  SUBJECT DELETE BUTTON */
+.subj-del-btn {
+  background: none; border: none;
+  font-size: 11px; cursor: pointer;
+  color: var(--text-dim); opacity: 0.45;
+  padding: 0 2px; border-radius: 3px;
+  transition: opacity 0.15s, color 0.15s;
+}
+.subj-del-btn:hover { opacity: 1; color: var(--softred); }
+
+/*  TASK TYPE SELECT (in subject add row) */
+.task-type-sel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px;
+  color: var(--text-dim);
+  font-family: var(--font-main);
+  font-size: 9px;
+  padding: 3px 4px;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+body.light-mode .task-type-sel { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.09); }
+.task-type-sel option { background: #120810; }
+body.light-mode .task-type-sel option { background: #fff; color: #3d0a26; }
+
+/* subj-add-task with type select */
+.subj-add-task {
+  display: flex; gap: 4px; align-items: center; flex-wrap: wrap;
+  margin-top: auto; padding-top: 6px;
+  border-top: 1px solid var(--card-border);
+}
+.subj-add-task input { flex: 1; min-width: 80px; font-size: 10px; }
+
+/*  STREAK DAY — "today" ring indicator─ */
+.streak-today {
+  outline: 2px solid var(--pink);
+  outline-offset: 1px;
+}
+
+/*  EXAM PLANNER */
+.planner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+.planner-top {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.planner-add-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.planner-add-row input,
+.planner-add-row select {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-family: var(--font-main);
+  font-size: 10px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+body.light-mode .planner-add-row input { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.09); }
+.planner-add-row input:focus { border-color: var(--pink); }
+.planner-add-row input[type="text"] { flex: 1; min-width: 120px; }
+.planner-add-row input[type="date"] {
+  color-scheme: dark;
+  flex-shrink: 0;
+  width: 140px;
+}
+body.light-mode .planner-add-row input[type="date"] { color-scheme: light; }
+.planner-add-row button {
+  background: linear-gradient(135deg, var(--pink), var(--pink5));
+  border: none; color: #fff;
+  border-radius: 4px; padding: 5px 12px;
+  font-family: var(--font-main); font-size: 10px;
+  cursor: pointer; white-space: nowrap;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+.planner-add-row button:hover { opacity: 0.85; }
+
+.planner-section-title {
+  font-family: var(--font-display);
+  font-size: 9px; letter-spacing: 1.5px;
+  color: var(--pink); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.planner-list-wrap {
+  padding: 10px 14px;
+  flex: 0 0 auto;
+  max-height: 200px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--glass-border);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,61,154,0.2) transparent;
+}
+
+.exam-list { display: flex; flex-direction: column; gap: 5px; }
+.exam-empty { font-size: 10px; color: var(--text-dim); padding: 4px 0; }
+
+.exam-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-radius: 6px;
+  border: 1px solid var(--glass-border);
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.1s;
+  gap: 8px;
+}
+.exam-item:hover { border-color: rgba(255,61,154,0.3); background: rgba(255,61,154,0.04); transform: translateX(2px); }
+.exam-item.selected { border-color: rgba(255,61,154,0.45); background: rgba(255,61,154,0.07); }
+.exam-item.today  { border-color: rgba(255,230,0,0.45); }
+.exam-item.soon   { border-color: rgba(255,107,138,0.45); }
+.exam-item.past   { opacity: 0.5; }
+
+.exam-item-left  { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.exam-item-name  { font-size: 11px; color: var(--text); }
+.exam-item-subj  { font-size: 9px; color: var(--pink3); }
+.exam-item-tasks { font-size: 9px; color: var(--text-dim); }
+
+.exam-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.exam-item-days  { font-family: var(--font-display); font-size: 10px; font-weight: 700; }
+.exam-item-days.ok   { color: var(--pink2); }
+.exam-item-days.soon { color: var(--softred); }
+.exam-item-days.today{ color: var(--gold); }
+.exam-item-days.past { color: var(--text-dim); }
+.exam-item-date  { font-size: 8px; color: var(--text-dim); }
+
+.exam-del-btn {
+  background: none; border: none;
+  font-size: 9px; color: var(--text-dim);
+  cursor: pointer; padding: 1px 3px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+  border-radius: 3px;
+}
+.exam-item:hover .exam-del-btn { opacity: 1; }
+.exam-del-btn:hover { color: var(--softred); }
+
+/* detail panel */
+.planner-detail {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 14px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,61,154,0.2) transparent;
+}
+
+.planner-detail-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+}
+.planner-detail-title {
+  font-family: var(--font-display); font-size: 11px;
+  color: var(--pink); font-weight: 400;
+}
+.planner-detail-date { font-size: 9px; color: var(--text-dim); text-align: right; }
+
+.planner-countdown {
+  font-family: var(--font-display); font-size: 13px; letter-spacing: 1px;
+}
+.planner-countdown.ok   { color: var(--pink2); }
+.planner-countdown.soon { color: var(--softred); }
+.planner-countdown.today{ color: var(--gold); text-shadow: 0 0 10px rgba(251,191,96,0.4); }
+.planner-countdown.past { color: var(--text-dim); }
+
+.planner-tasks-section { display: flex; flex-direction: column; gap: 6px; }
+
+.planner-task-list {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 130px; overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,61,154,0.2) transparent;
+}
+
+.planner-add-task-row {
+  display: flex; gap: 5px; flex-wrap: wrap; align-items: center;
+}
+.planner-add-task-row input {
+  flex: 1; min-width: 100px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px; padding: 4px 8px;
+  font-family: var(--font-main); font-size: 10px;
+  color: var(--text); outline: none; transition: border 0.2s;
+}
+body.light-mode .planner-add-task-row input { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.09); }
+.planner-add-task-row input:focus { border-color: var(--pink); }
+.planner-add-task-row select {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px; padding: 4px 6px;
+  font-family: var(--font-main); font-size: 9px;
+  color: var(--text-dim); outline: none; cursor: pointer;
+}
+body.light-mode .planner-add-task-row select { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.09); }
+.planner-add-task-row select option { background: #120810; }
+body.light-mode .planner-add-task-row select option { background: #fff; color: #3d0a26; }
+.planner-add-task-row button {
+  background: var(--pink); border: none; color: #fff;
+  border-radius: 3px; padding: 4px 10px;
+  cursor: pointer; font-weight: bold; font-size: 14px;
+  transition: opacity 0.2s; flex-shrink: 0;
+}
+.planner-add-task-row button:hover { opacity: 0.82; }
+
+.planner-progress-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: auto; padding-top: 6px;
+  border-top: 1px solid var(--card-border);
+}
+.planner-prog-label { font-size: 10px; color: var(--pink); min-width: 28px; }
+.planner-prog-bar { flex: 1; }
+
+/*  MOBILE RESPONSIVE */
+@media (max-width: 700px) {
+
+  /* icon grid: horizontal row at top instead of vertical column */
+  .icon-grid {
+    top: 10px; left: 8px; right: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-height: none;
+    gap: 6px;
+    width: auto;
+  }
+
+  .desk-icon {
+    width: 60px;
+  }
+
+  .icon-img-themed {
+    width: 42px; height: 42px;
+  }
+
+  /* windows: fill screen width, let JS set dimensions on open */
+  .app-window {
+    left: 4px !important;
+    top: 4px !important;
+    width: calc(100vw - 8px) !important;
+    max-height: calc(100vh - 60px) !important;
+    resize: none;
+  }
+
+  /* dashboard: stack columns vertically */
+  .dash-main-cols {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .dash-col-subjects { width: 100% !important; }
+
+  /* mini player: full width */
+  #miniPlayer {
+    left: 4px; right: 4px; width: auto;
+    bottom: calc(var(--taskbar-h) + 6px);
+  }
+
+  /* planner add row: stack */
+  .planner-add-row { gap: 4px; }
+  .planner-add-row input[type="text"] { width: 100%; }
+  .planner-add-row input[type="date"] { width: 100%; }
+
+  /* music: hide now-playing on narrow screens */
+  .now-playing { display: none !important; }
+  .music-layout { flex-direction: column; }
+  .playlist-panel { flex: 1; }
+
+  /* taskbar: shrink */
+  .start-btn { font-size: 7px; padding: 4px 7px; }
+  .taskbar-clock { font-size: 11px; }
+  .taskbar-app-btn { font-size: 9px; padding: 3px 6px; }
+}
